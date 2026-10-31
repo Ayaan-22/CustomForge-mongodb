@@ -1,0 +1,15 @@
+{
+  "name": "customforge-mongodb",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "setup": "node scripts/setup.mjs",
+    "dev": "node scripts/dev.mjs --local",
+    "dev:configured": "node scripts/dev.mjs --configured",
+    "test": "node scripts/check.mjs test",
+    "build": "node scripts/check.mjs build",
+    "typecheck": "node scripts/check.mjs typecheck",
+    "seed:local": "node server/scripts/seed.js --local"
+  },
+  "engines": { "node": "^22.13.0 || >=24" }
+}

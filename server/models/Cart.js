@@ -87,7 +87,7 @@ const cartSchema = new mongoose.Schema(
 );
 
 // Indexes for performance optimization
-cartSchema.index({ user: 1 }, { unique: true });
+
 cartSchema.index({ user: 1, updatedAt: -1 });
 cartSchema.index({ user: 1, "items.product": 1 });
 

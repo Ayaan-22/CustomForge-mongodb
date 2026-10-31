@@ -1,39 +1,18 @@
-// File: server/routes/productRoutes.js
-import express from "express";
-import {
-  // Public endpoints
-  getAllProducts,
-  getProduct,
-  getTopProducts,
-  getRelatedProducts,
-  searchProducts,
-  getCategories,
-  getFeaturedProducts,
-  getProductsByCategory,
+import {Router} from 'express';
+import * as products from '../controllers/productController.js';
+import {protect,verifiedEmail} from '../middleware/authMiddleware.js';
 
-  // Protected user endpoints
-  createProductReview,
-  addToWishlist,
-  removeFromWishlist,
-} from "../controllers/productController.js";
-
-import { protect, restrictTo } from "../middleware/authMiddleware.js";
-
-const router = express.Router();
-
-// ----------- PROTECTED ROUTES -----------
-router.post("/:id/wishlist", protect, restrictTo('user', 'admin'), addToWishlist);
-router.delete("/:id/wishlist", protect, restrictTo('user', 'admin'), removeFromWishlist);
-router.post("/:id/reviews", protect, restrictTo('user', 'admin'), createProductReview);
-
-// ----------- PUBLIC ROUTES -----------
-router.get("/", getAllProducts);
-router.get("/top", getTopProducts);
-router.get("/search", searchProducts);
-router.get("/categories", getCategories);
-router.get("/featured", getFeaturedProducts);
-router.get("/category/:category", getProductsByCategory);
-router.get("/:id", getProduct);
-router.get("/:id/related", getRelatedProducts);
-
+const router=Router();
+router.get('/',products.getAllProducts);
+router.get('/search',products.getAllProducts);
+router.get('/facets',products.getCatalogFacets);
+router.get('/top',products.getTopProducts);
+router.get('/featured',products.getFeaturedProducts);
+router.get('/categories',products.getCategories);
+router.get('/brands',products.getBrands);
+router.get('/category/:category',products.getAllProducts);
+router.get('/:id/related',products.getRelatedProducts);
+router.get('/:id/reviews',products.getProductReviews);
+router.post('/:id/reviews',protect,verifiedEmail,products.createProductReview);
+router.get('/:id',products.getProduct);
 export default router;

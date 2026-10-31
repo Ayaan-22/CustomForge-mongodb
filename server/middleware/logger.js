@@ -23,18 +23,23 @@ const CONFIG = {
   SERVICE_NAME: process.env.SERVICE_NAME || "gaming-shop",
   MAX_LOG_SIZE: process.env.LOG_MAX_SIZE || "20m",
   MAX_LOG_FILES: process.env.LOG_MAX_FILES || "30d",
-  SENSITIVE_FIELDS: (process.env.LOG_SENSITIVE_FIELDS ||
-    "password,newPassword,confirmPassword,currentPassword,token,accessToken,refreshToken,authorization,creditCard,cvv,cardNumber,expiryDate,ssn,socialSecurity,passport")
+  SENSITIVE_FIELDS: (
+    process.env.LOG_SENSITIVE_FIELDS ||
+    "password,newPassword,confirmPassword,currentPassword,token,accessToken,refreshToken,authorization,creditCard,cvv,cardNumber,expiryDate,ssn,socialSecurity,passport"
+  )
     .split(",")
     .map((s) => s.trim())
     .filter(Boolean),
-  SENSITIVE_HEADERS: (process.env.LOG_SENSITIVE_HEADERS ||
-    "authorization,cookie,set-cookie")
+  SENSITIVE_HEADERS: (
+    process.env.LOG_SENSITIVE_HEADERS || "authorization,cookie,set-cookie"
+  )
     .split(",")
     .map((s) => s.trim().toLowerCase())
     .filter(Boolean),
-  HEADER_WHITELIST: (process.env.LOG_HEADER_WHITELIST ||
-    "user-agent,content-type,accept,referer,x-forwarded-for")
+  HEADER_WHITELIST: (
+    process.env.LOG_HEADER_WHITELIST ||
+    "user-agent,content-type,accept,referer,x-forwarded-for"
+  )
     .split(",")
     .map((s) => s.trim().toLowerCase())
     .filter(Boolean),
@@ -194,10 +199,7 @@ export const maskSensitiveData = (input, seen = new WeakSet()) => {
         const ipVal = input[key];
         if (typeof ipVal === "string") {
           if (CONFIG.MASK_IP === "hash") {
-            out[key] = crypto
-              .createHash("sha256")
-              .update(ipVal)
-              .digest("hex");
+            out[key] = crypto.createHash("sha256").update(ipVal).digest("hex");
           } else if (CONFIG.MASK_IP === "last-octet") {
             out[key] = ipVal.replace(/(\d+)$/, "***");
           } else {
@@ -236,9 +238,7 @@ const consoleFormat = winston.format.combine(
   winston.format.printf(({ timestamp, level, message, ...meta }) => {
     const safeMeta = maskSensitiveData(meta);
     const metaString =
-      safeMeta && Object.keys(safeMeta).length
-        ? JSON.stringify(safeMeta)
-        : "";
+      safeMeta && Object.keys(safeMeta).length ? JSON.stringify(safeMeta) : "";
     return `[${timestamp}] [${CONFIG.SERVICE_NAME}] ${level}: ${message} ${metaString}`;
   })
 );
@@ -251,6 +251,8 @@ const createDailyFileTransport = ({ filename, level = "info" }) => {
     level,
     filename: path.join(CONFIG.LOG_DIR, filename),
     datePattern: "YYYY-MM-DD",
+    // The admin log reader uses this same server-local calendar day.
+    utc: false,
     zippedArchive: true,
     maxSize: CONFIG.MAX_LOG_SIZE,
     maxFiles: CONFIG.MAX_LOG_FILES,
@@ -408,7 +410,10 @@ export const performanceLogger = (req, res, next) => {
         threshold: CONFIG.SLOW_REQUEST_THRESHOLD_MS,
         userId: req.user?._id || "anonymous",
       });
-    } else if (CONFIG.ENABLE_FAST_LOGS && duration < CONFIG.FAST_REQUEST_THRESHOLD_MS) {
+    } else if (
+      CONFIG.ENABLE_FAST_LOGS &&
+      duration < CONFIG.FAST_REQUEST_THRESHOLD_MS
+    ) {
       logger.debug("Very fast response", {
         requestId: req.requestId,
         route: req.originalUrl,
@@ -459,47 +464,59 @@ export const errorLogger = (err, req, res, next) => {
  */
 export const securityLogger = {
   loginSuccess: (userId, ip, userAgent) => {
-    logger.info("User login successful", maskSensitiveData({
-      event: "login_success",
-      userId,
-      ip,
-      userAgent,
-      timestamp: new Date().toISOString(),
-    }));
+    logger.info(
+      "User login successful",
+      maskSensitiveData({
+        event: "login_success",
+        userId,
+        ip,
+        userAgent,
+        timestamp: new Date().toISOString(),
+      })
+    );
   },
 
   loginFailed: (identifier, ip, reason, userAgent) => {
-    logger.warn("User login failed", maskSensitiveData({
-      event: "login_failed",
-      identifier:
-        typeof identifier === "string"
-          ? identifier.replace(/(.{3}).+/, "$1***")
-          : maskSensitiveData(identifier),
-      ip,
-      reason,
-      userAgent,
-      timestamp: new Date().toISOString(),
-    }));
+    logger.warn(
+      "User login failed",
+      maskSensitiveData({
+        event: "login_failed",
+        identifier:
+          typeof identifier === "string"
+            ? identifier.replace(/(.{3}).+/, "$1***")
+            : maskSensitiveData(identifier),
+        ip,
+        reason,
+        userAgent,
+        timestamp: new Date().toISOString(),
+      })
+    );
   },
 
   passwordChange: (userId, ip) => {
-    logger.info("Password changed", maskSensitiveData({
-      event: "password_change",
-      userId,
-      ip,
-      timestamp: new Date().toISOString(),
-    }));
+    logger.info(
+      "Password changed",
+      maskSensitiveData({
+        event: "password_change",
+        userId,
+        ip,
+        timestamp: new Date().toISOString(),
+      })
+    );
   },
 
   unauthorizedAccess: (route, method, ip, userId) => {
-    logger.warn("Unauthorized access attempt", maskSensitiveData({
-      event: "unauthorized_access",
-      route,
-      method,
-      ip,
-      userId: userId || "unknown",
-      timestamp: new Date().toISOString(),
-    }));
+    logger.warn(
+      "Unauthorized access attempt",
+      maskSensitiveData({
+        event: "unauthorized_access",
+        route,
+        method,
+        ip,
+        userId: userId || "unknown",
+        timestamp: new Date().toISOString(),
+      })
+    );
   },
 };
 

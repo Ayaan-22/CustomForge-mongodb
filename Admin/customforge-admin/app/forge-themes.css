@@ -1,0 +1,99 @@
+/* Semantic surfaces and accessible accent colors are shared by pages and portal controls. */
+:root, .dark {
+  --fa-surface: var(--card);
+  --fa-surface-raised: #182535;
+  --fa-surface-subtle: #101823;
+  --fa-input-surface: #0e1723;
+  --fa-text-secondary: #b6c7d9;
+  --fa-text-tertiary: #9bb0c6;
+  --fa-violet: #a696ff;
+  --fa-blue: #81b8ff;
+  --fa-warning: #ffc078;
+  --fa-danger: #ff959c;
+  --fa-success: #62f0dd;
+  --fa-accent-soft: #142d31;
+  --fa-shadow: 0 6px 24px #00000020;
+  --fa-overlay-shadow: 0 24px 80px #00000099;
+  --fa-overlay: #030912bd;
+  --fa-skeleton-start: #182738;
+  --fa-skeleton-end: #263d50;
+  --fa-type-caption: .875rem;
+  --fa-type-label: 1rem;
+  --fa-type-body: 1.125rem;
+  --fa-type-panel: 1.25rem;
+  --fa-type-title: clamp(1.75rem, 2.6vw, 2.25rem);
+  --sidebar: var(--fa-surface-subtle);
+  --sidebar-foreground: var(--foreground);
+  --sidebar-primary: var(--primary);
+  --sidebar-primary-foreground: var(--primary-foreground);
+  --sidebar-accent: var(--fa-accent-soft);
+  --sidebar-accent-foreground: var(--primary);
+  --sidebar-border: var(--border);
+  --sidebar-ring: var(--ring);
+}
+
+html.light {
+  --background: #f3f6fa;
+  --foreground: #17273b;
+  --card: #ffffff;
+  --card-foreground: #17273b;
+  --popover: #ffffff;
+  --popover-foreground: #17273b;
+  --primary: #08756e;
+  --primary-foreground: #ffffff;
+  --secondary: #eaf0f6;
+  --secondary-foreground: #31455f;
+  --muted: #edf2f7;
+  --muted-foreground: #53657a;
+  --accent: #e1f4f0;
+  --accent-foreground: #086960;
+  --destructive: #bd344c;
+  --destructive-foreground: #ffffff;
+  --border: #d4deea;
+  --input: #7e93a9;
+  --ring: #08756e;
+  --chart-1: #08756e;
+  --chart-2: #6c45c7;
+  --chart-3: #315ebb;
+  --chart-4: #945606;
+  --chart-5: #bd344c;
+  --fa-surface-raised: #edf2f8;
+  --fa-surface-subtle: #f8fafc;
+  --fa-input-surface: #ffffff;
+  --fa-text-secondary: #40536b;
+  --fa-text-tertiary: #5e6f83;
+  --fa-violet: #6c45c7;
+  --fa-blue: #315ebb;
+  --fa-warning: #945606;
+  --fa-danger: #bd344c;
+  --fa-success: #167452;
+  --fa-accent-soft: #e7f5f2;
+  --fa-shadow: 0 6px 24px #2039540d;
+  --fa-overlay-shadow: 0 24px 80px #20395430;
+  --fa-overlay: #14253a66;
+  --fa-skeleton-start: #e6edf5;
+  --fa-skeleton-end: #d2deeb;
+  --forge-menu-surface: #ffffff;
+  --forge-menu-border: #b9cbd9;
+  --forge-menu-text: #23374d;
+  --forge-menu-highlight: #e7f5f2;
+  --forge-menu-shadow: 0 16px 44px #19374a1a, 0 0 0 1px #08756e08;
+  --forge-scroll-track: #edf2f7;
+  --forge-scroll-thumb: #639f9a;
+  --forge-scroll-hover: #08756e;
+  color-scheme: light;
+}
+
+.fa-theme-switch { flex-shrink: 0; border-color: var(--border); background: var(--card); color: var(--fa-text-secondary); }
+.fa-theme-switch:hover, .fa-theme-switch[data-state="open"] { border-color: var(--primary); background: var(--fa-accent-soft); color: var(--primary); }
+.fa-theme-menu { min-width: 262px; }
+.fa-theme-option { display: grid; gap: 2px; }
+.fa-theme-option strong { font-size: 1.125rem; font-weight: 550; }
+.fa-theme-option small { color: var(--muted-foreground); font-size: 0.9375rem; line-height: 1.5; }
+.fa-legacy-toast { border: 1px solid var(--border); background: var(--popover); color: var(--popover-foreground); box-shadow: var(--fa-shadow); }
+.fa-legacy-toast.is-success { border-color: var(--fa-success); }
+.fa-legacy-toast.is-danger { border-color: var(--fa-danger); }
+.fa-legacy-toast.is-info { border-color: var(--fa-blue); }
+/* Static SVG labels and portaled tooltip content inherit the current chart typography. */
+.recharts-text { font-family: var(--font-admin-sans), Arial, sans-serif; font-size: 1.125rem; fill: var(--muted-foreground); }
+.recharts-default-tooltip { background: var(--popover); border-color: var(--border); color: var(--popover-foreground); }

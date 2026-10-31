@@ -1,342 +1,81 @@
-// File: server/models/User.js
+import mongoose from 'mongoose';
+import bcrypt from 'bcryptjs';
 
-import mongoose from "mongoose";
-import bcrypt from "bcryptjs";
-
-/**
- * Embedded Address Schema
- */
-const addressSchema = new mongoose.Schema(
-  {
-    label: {
-      type: String,
-      trim: true,
-      default: "Home",
-    },
-    fullName: {
-      type: String,
-      required: [true, "Full name is required"],
-    },
-    address: {
-      type: String,
-      required: [true, "Street address is required"],
-    },
-    city: {
-      type: String,
-      required: [true, "City is required"],
-    },
-    state: {
-      type: String,
-      required: [true, "State is required"],
-    },
-    postalCode: {
-      type: String,
-      required: [true, "Postal code is required"],
-    },
-    country: {
-      type: String,
-      required: [true, "Country is required"],
-      default: "United States",
-    },
-    phoneNumber: {
-      type: String,
-      required: [true, "Phone number is required"],
-    },
-    isDefault: {
-      type: Boolean,
-      default: false,
-    },
-  },
-  { _id: false }
-);
-
-/**
- * Embedded Payment Method Schema
- *
- * NOTE: cardNumber is stored as plain string here but is:
- *  - select: false (never returned by default)
- *  - masked in toJSON()
- * In a real system, you should store a token / last4 only or encrypt it.
- */
-const paymentMethodSchema = new mongoose.Schema(
-  {
-    type: {
-      type: String,
-      enum: ["stripe", "paypal", "cod", "credit_card"],
-      required: [true, "Payment method type is required"],
-      default: "stripe",
-    },
-    cardHolderName: {
-      type: String,
-      trim: true,
-    },
-    cardNumber: {
-      type: String,
-      minlength: [12, "Invalid card number"],
-      maxlength: [19, "Invalid card number"],
-      select: false, // Never expose
-    },
-    expiryMonth: {
-      type: Number,
-      min: 1,
-      max: 12,
-    },
-    expiryYear: {
-      type: Number,
-      validate: {
-        validator: (v) => v >= new Date().getFullYear(),
-        message: "Expiry year cannot be in the past",
-      },
-    },
-    billingAddress: addressSchema,
-    isDefault: {
-      type: Boolean,
-      default: false,
-    },
-  },
-  { _id: false }
-);
-
-/**
- * Main User Schema
- */
-const userSchema = new mongoose.Schema(
-  {
-    name: {
-      type: String,
-      required: [true, "Name is required"],
-      trim: true,
-      maxlength: [50, "Name cannot exceed 50 characters"],
-    },
-    email: {
-      type: String,
-      required: [true, "Email is required"],
-      unique: true,
-      lowercase: true,
-      validate: {
-        validator: function (v) {
-          return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v);
-        },
-        message: (props) => `${props.value} is not a valid email`,
-      },
-    },
-    password: {
-      type: String,
-      required: [true, "Password is required"],
-      minlength: [8, "Password must be at least 8 characters"],
-      select: false,
-    },
-    role: {
-      type: String,
-      enum: ["user", "admin"],
-      default: "user",
-    },
-    avatar: {
-      type: String,
-      default: "default.jpg",
-    },
-
-    // Simple profile contact fields (used in updateMe)
-    phone: {
-      type: String,
-      trim: true,
-    },
-    address: {
-      type: String,
-      trim: true,
-    },
-
-    isEmailVerified: {
-      type: Boolean,
-      default: false,
-    },
-
-    // These fields store HASHED tokens only (see generateToken utils)
-    emailVerificationToken: {
-      type: String,
-      select: false,
-    },
-    emailVerificationExpires: {
-      type: Date,
-      select: false,
-    },
-    passwordResetToken: {
-      type: String,
-      select: false,
-    },
-    passwordResetExpires: {
-      type: Date,
-      select: false,
-    },
-
-    passwordChangedAt: Date,
-
-    twoFactorEnabled: {
-      type: Boolean,
-      default: false,
-    },
-    twoFactorSecret: {
-      type: String,
-      select: false,
-    },
-
-    active: {
-      type: Boolean,
-      default: true,
-      select: false,
-    },
-
-    wishlist: [
-      {
-        type: mongoose.Schema.Types.ObjectId,
-        ref: "Product",
-      },
-    ],
-
-    // Embedded schemas (aligned with Order model)
-    addresses: [addressSchema],
-    paymentMethods: [paymentMethodSchema],
-  },
-  {
-    timestamps: true,
-    toJSON: { virtuals: true },
-    toObject: { virtuals: true },
-  }
-);
-
-// Indexes for better query performance
-userSchema.index({ role: 1 });
-userSchema.index({ email: 1 });
-
-/* ---------------- Password hashing middleware ---------------- */
-userSchema.pre("save", async function (next) {
-  if (!this.isModified("password")) return next();
-
-  this.password = await bcrypt.hash(this.password, 12);
-  // Keep passwordChangedAt in sync on direct password changes
-  this.passwordChangedAt = new Date();
-  next();
+const addressSchema = new mongoose.Schema({
+  label: {type:String, enum:['Home','Work','Other'], default:'Home'},
+  fullName: {type:String, required:true, trim:true}, address: {type:String, required:true, trim:true},
+  city: {type:String, required:true, trim:true}, state: {type:String, required:true, trim:true},
+  postalCode: {type:String, required:true, trim:true}, country: {type:String, required:true, default:'United States'},
+  phoneNumber: {type:String, required:true, trim:true}, isDefault: {type:Boolean, default:false},
 });
-
-/* ---------------- Validate single default address/payment ---------------- */
-userSchema.pre("save", function (next) {
-  if (this.isModified("addresses") && Array.isArray(this.addresses)) {
-    const defaults = this.addresses.filter((a) => a.isDefault);
-    if (defaults.length > 1) {
-      return next(new Error("User can have only one default address"));
-    }
+const schema = new mongoose.Schema({
+  name: {type:String, required:true, trim:true, minlength:2, maxlength:100},
+  email: {type:String, required:true, trim:true, lowercase:true, unique:true},
+  password: {type:String, required:true, select:false},
+  role: {type:String, enum:['user','admin'], default:'user'},
+  avatar: String, phone:String, address:String,
+  isEmailVerified: {type:Boolean, default:false},
+  emailVerificationToken: {type:String, select:false}, emailVerificationExpires: {type:Date, select:false},
+  passwordResetToken: {type:String, select:false}, passwordResetExpires: {type:Date, select:false},
+  passwordChangedAt: Date, twoFactorEnabled: {type:Boolean, default:false},
+  twoFactorSecret: {type:String, select:false}, active: {type:Boolean, default:true},
+  refreshTokenHash: {type:String, select:false}, refreshTokenExpires: {type:Date, select:false},
+  stripeCustomerId: {type:String, select:false},
+  wishlist: [{type:mongoose.Schema.Types.ObjectId, ref:'Product'}], addresses:[addressSchema],
+}, {timestamps:true, optimisticConcurrency:true});
+schema.pre('save', async function() {
+  if (this.isModified('password')) {
+    if (typeof this.password !== 'string' || this.password.length < 8 || this.password.length > 128) throw new Error('Password must contain 8 to 128 characters');
+    this.password = await bcrypt.hash(this.password, 12);
+    this.passwordChangedAt = new Date();
   }
-
-  if (this.isModified("paymentMethods") && Array.isArray(this.paymentMethods)) {
-    const defaults = this.paymentMethods.filter((p) => p.isDefault);
-    if (defaults.length > 1) {
-      return next(new Error("User can have only one default payment method"));
-    }
-  }
-
-  next();
 });
-
-/* ---------------- Exclude inactive users from all find queries ---------------- */
-userSchema.pre(/^find/, function (next) {
-  // Only add condition if not already filtering by active
-  const currentFilter = this.getFilter ? this.getFilter() : {};
-  if (currentFilter.active === undefined) {
-    this.find({ active: { $ne: false } });
-  }
-  next();
-});
-
-/* ---------------- Handle updates via findOneAndUpdate safely ---------------- */
-userSchema.pre("findOneAndUpdate", async function (next) {
-  let update = this.getUpdate() || {};
-  const hasDollar = Object.keys(update).some((k) => k.startsWith("$"));
-
-  // Support both { password: ... } and { $set: { password: ... } }
-  const getContainer = () => (hasDollar && update.$set ? update.$set : update);
-
-  const container = getContainer();
-
-  if (container.password) {
-    container.password = await bcrypt.hash(container.password, 12);
-    container.passwordChangedAt = new Date();
-  }
-
-  if (container.addresses && Array.isArray(container.addresses)) {
-    const defaults = container.addresses.filter((a) => a.isDefault);
-    if (defaults.length > 1) {
-      return next(new Error("User can have only one default address"));
-    }
-  }
-
-  if (container.paymentMethods && Array.isArray(container.paymentMethods)) {
-    const defaults = container.paymentMethods.filter((p) => p.isDefault);
-    if (defaults.length > 1) {
-      return next(new Error("User can have only one default payment method"));
-    }
-  }
-
-  // Write container back to update object
-  if (hasDollar && update.$set) {
-    update.$set = container;
-  } else {
-    update = container;
-  }
-
-  this.setUpdate(update);
-  next();
-});
-
-/* ---------------- Instance Methods ---------------- */
-
-/**
- * Compare candidate password with stored hash
- */
-userSchema.methods.comparePassword = async function (candidatePassword) {
-  return await bcrypt.compare(candidatePassword, this.password);
-};
-
-/**
- * Check if user changed password after the JWT was issued
- */
-userSchema.methods.changedPasswordAfter = function (JWTTimestamp) {
-  if (this.passwordChangedAt) {
-    const changedTimestamp = parseInt(
-      this.passwordChangedAt.getTime() / 1000,
-      10
-    );
-    return JWTTimestamp < changedTimestamp;
-  }
-  return false;
-};
-
-/**
- * Clean output (remove sensitive info)
- */
-userSchema.methods.toJSON = function () {
-  const user = this.toObject({ virtuals: true });
-
-  delete user.password;
-  delete user.__v;
-  delete user.emailVerificationToken;
-  delete user.emailVerificationExpires;
-  delete user.passwordResetToken;
-  delete user.passwordResetExpires;
-  delete user.twoFactorSecret;
-  delete user.active;
-
-  // Mask card numbers before output
-  if (user.paymentMethods) {
-    user.paymentMethods = user.paymentMethods.map((pm) => {
-      if (pm.cardNumber) {
-        pm.cardNumber = "**** **** **** " + pm.cardNumber.slice(-4);
-      }
-      return pm;
-    });
-  }
-
-  return user;
-};
-
-const User = mongoose.model("User", userSchema);
+schema.methods.comparePassword = function(password) {return bcrypt.compare(password, this.password);};
+const User = mongoose.models.User || mongoose.model('User', schema);
 export default User;
+
+const privateSelection = '+password +twoFactorSecret +emailVerificationToken +emailVerificationExpires +passwordResetToken +passwordResetExpires +refreshTokenHash +refreshTokenExpires +stripeCustomerId';
+const mapUser = user => user ? {...user, id:String(user._id)} : null;
+export const createUser = async (payload, users = User) => mapUser((await users.create(payload)).toObject());
+export const findUserByEmail = async (email, options = {}, users = User) => {
+  const user = await users.findOne({email:String(email).trim().toLowerCase()}).select(privateSelection).lean();
+  if (user && !options.includePassword) delete user.password;
+  return mapUser(user);
+};
+export const findUserById = async (id, options = {}, users = User) => {
+  if (!mongoose.isObjectIdOrHexString(id)) return null;
+  const user = await users.findById(id).select(privateSelection).lean();
+  if (user && !options.includePassword) delete user.password;
+  return mapUser(user);
+};
+export const updateUser = async (id, updates, users = User) => {
+  const next = {...updates};
+  if (next.password !== undefined) {
+    if (typeof next.password !== 'string' || next.password.length < 8 || next.password.length > 128) throw new Error('Invalid password length');
+    next.password = await bcrypt.hash(next.password, 12);
+    next.passwordChangedAt = new Date();
+    next.refreshTokenHash = null;
+    next.refreshTokenExpires = null;
+  }
+  return mapUser(await users.findByIdAndUpdate(id, {$set:next}, {new:true,runValidators:true}).select(privateSelection).lean());
+};
+export const comparePassword = (candidate, hash) => Boolean(candidate && hash) ? bcrypt.compare(candidate, hash) : false;
+export const hashPassword = password => bcrypt.hash(password,12);
+export const rotateRefreshSession = async (id, expectedHash, nextHash, expires, users = User, passwordChangedAt) => {
+  const result = await users.updateOne({_id:id, active:true, refreshTokenHash:expectedHash,
+    refreshTokenExpires:{$gt:new Date()}, passwordChangedAt:passwordChangedAt || null},
+  {$set:{refreshTokenHash:nextHash,refreshTokenExpires:expires}});
+  return result.modifiedCount === 1;
+};
+export const revokeRefreshSession = async (id, expectedHash, users = User) => {
+  const result = await users.updateOne({_id:id,refreshTokenHash:expectedHash},{$set:{refreshTokenHash:null,refreshTokenExpires:null}});
+  return result.modifiedCount === 1;
+};
+export const consumeAuthToken = async (id, tokenField, expectedHash, expiresField, updates, users = User) => {
+  const next={...updates,[tokenField]:null,[expiresField]:null};
+  if(next.password!==undefined){
+    if(typeof next.password!=='string'||next.password.length<8||next.password.length>128)throw new Error('Invalid password length');
+    next.password=await bcrypt.hash(next.password,12);next.passwordChangedAt=new Date();next.refreshTokenHash=null;next.refreshTokenExpires=null;
+  }
+  return mapUser(await users.findOneAndUpdate({_id:id,active:true,[tokenField]:expectedHash,[expiresField]:{$gt:new Date()}},{$set:next},{new:true,runValidators:true}).select(privateSelection).lean());
+};

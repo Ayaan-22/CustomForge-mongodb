@@ -1,0 +1,892 @@
+/* Account routes share a calm command center; service and payment flows stay intact. */
+.forge-account {
+  display: grid;
+  grid-template-columns: 260px minmax(0, 1fr);
+  gap: 32px;
+  padding-block: 34px 70px;
+}
+.forge-account-sidebar {
+  align-self: start;
+  position: sticky;
+  top: 155px;
+  max-height: calc(100dvh - 175px);
+  border: 1px solid #2d3d50;
+  border-radius: 10px;
+  background: linear-gradient(150deg, #16212e, #101620);
+  overflow-y: auto;
+}
+.forge-account-identity {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 20px 17px;
+  border-bottom: 1px solid #2c394b;
+}
+.forge-account-avatar {
+  display: grid;
+  place-items: center;
+  width: 42px;
+  height: 46px;
+  flex-shrink: 0;
+  color: #62f0dd;
+  border: 1px solid #62f0dd55;
+  background: #62f0dd09;
+  border-radius: 8px 3px 8px 3px;
+  font-size: 1.125rem;
+  font-weight: 800;
+}
+.forge-account-identity > div {
+  min-width: 0;
+}
+.forge-account-identity .forge-eyebrow {
+  font-size: 0.875rem;
+  letter-spacing: .05em;
+}
+.forge-account-identity strong {
+  display: block;
+  margin-top: 5px;
+  font-size: 1.125rem;
+  line-height: 1.5;
+  overflow-wrap: anywhere;
+}
+.forge-account-identity div > span {
+  display: block;
+  color: #a3adbe;
+  font-size: 0.875rem;
+  line-height: 1.6;
+  margin-top: 2px;
+  overflow-wrap: anywhere;
+}
+.forge-account-sidebar nav {
+  display: grid;
+  gap: 5px;
+  padding: 12px;
+}
+.forge-account-sidebar nav a {
+  display: flex;
+  align-items: center;
+  gap: 11px;
+  padding: 12px 10px;
+  border: 1px solid transparent;
+  border-radius: 6px;
+  min-height: 58px;
+  color: #9facbf;
+  transition:
+    color 180ms,
+    background 180ms,
+    border-color 180ms;
+}
+.forge-account-sidebar nav a:hover {
+  color: #f2f5fa;
+  background: #1b2938;
+}
+.forge-account-sidebar nav a[aria-current] {
+  color: #62f0dd;
+  background: #62f0dd0a;
+  border-color: #62f0dd3a;
+}
+.forge-account-sidebar nav a > svg {
+  flex-shrink: 0;
+}
+.forge-account-sidebar nav a span {
+  min-width: 0;
+}
+.forge-account-sidebar nav a strong {
+  display: block;
+  color: #e6eef9;
+  font-size: 0.9375rem;
+  font-weight: 600;
+}
+.forge-account-sidebar nav a[aria-current] strong {
+  color: #62f0dd;
+}
+.forge-account-sidebar nav a small {
+  display: block;
+  color: #9facbf;
+  font-size: 0.875rem;
+  margin-top: 3px;
+}
+.forge-account-nav-arrow {
+  margin-left: auto;
+  opacity: 0.7;
+}
+.forge-account-status {
+  display: grid;
+  gap: 10px;
+  padding: 17px 22px;
+  border-top: 1px solid #2c394b;
+}
+.forge-account-status span {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.875rem;
+  line-height: 1.5;
+  color: #b1bdcf;
+}
+.forge-account-status svg {
+  color: #a696ff;
+}
+.forge-account-content {
+  min-width: 0;
+}
+.forge-account-content > .container {
+  width: 100%;
+  max-width: none;
+  padding: 0;
+}
+.forge-account-content .font-heading {
+  font-family: var(--font-geist-sans), sans-serif;
+  letter-spacing: -0.025em;
+  font-weight: 700;
+}
+.forge-account-page-heading {
+  margin-bottom: 27px;
+}
+.forge-account-page-heading h1 {
+  font-size: clamp(30px, 3.5vw, 43px);
+  font-weight: 750;
+  line-height: 1.12;
+  letter-spacing: -0.04em;
+  margin-block: 11px 14px;
+}
+.forge-account-page-heading > p:last-child {
+  max-width: 610px;
+  color: #a3adbe;
+  font-size: 1rem;
+  line-height: 1.75;
+}
+.forge-account-overview {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 14px;
+  margin-bottom: 16px;
+}
+.forge-account-overview > div {
+  position: relative;
+  display: grid;
+  gap: 6px;
+  padding: 19px 22px;
+  border: 1px solid #334056;
+  border-radius: 8px;
+  background: linear-gradient(135deg, #1b2234, #101722);
+}
+.forge-account-overview > div > svg {
+  color: #a696ff;
+  margin-bottom: 6px;
+}
+.forge-account-overview > div > span {
+  color: #a3adbe;
+  font-size: 0.875rem;
+}
+.forge-account-overview strong {
+  font-size: 1.375rem;
+  font-weight: 650;
+}
+.forge-account-overview a {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  margin-top: 2px;
+  color: #62f0dd;
+  font-size: 0.875rem;
+  min-height: 36px;
+}
+.forge-account-shortcuts {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 14px;
+  margin-bottom: 25px;
+}
+.forge-account-shortcuts a {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-height: 76px;
+  padding: 13px 17px;
+  border: 1px solid #2e3d4e;
+  border-radius: 7px;
+  background: #111a25;
+}
+.forge-account-shortcuts a > svg:first-child {
+  color: #62f0dd;
+  flex-shrink: 0;
+}
+.forge-account-shortcuts a > svg:last-child {
+  margin-left: auto;
+  color: #a3adbe;
+  flex-shrink: 0;
+}
+.forge-account-shortcuts a strong {
+  display: block;
+  font-size: 0.9375rem;
+}
+.forge-account-shortcuts a small {
+  display: block;
+  margin-top: 4px;
+  color: #a3adbe;
+  font-size: 0.875rem;
+  line-height: 1.5;
+}
+.forge-account-panel {
+  margin-top: 20px;
+  padding: 24px;
+  border: 1px solid #2f3d50;
+  border-radius: 10px;
+  background: #111722;
+}
+.forge-account-panel-heading {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding-bottom: 20px;
+  margin-bottom: 20px;
+  border-bottom: 1px solid #2b3545;
+}
+.forge-account-panel-heading > svg {
+  flex-shrink: 0;
+  margin-top: 3px;
+  color: #62f0dd;
+}
+.forge-account-panel-heading h2 {
+  font-size: 1.375rem;
+  line-height: 1.35;
+  font-weight: 650;
+  letter-spacing: -0.02em;
+}
+.forge-account-panel-heading p {
+  color: #a3adbe;
+  font-size: 0.9375rem;
+  line-height: 1.7;
+  margin-top: 6px;
+}
+.forge-account-form-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 19px;
+}
+.forge-account-field {
+  display: grid;
+  gap: 8px;
+  min-width: 0;
+}
+.forge-account-field label {
+  font-size: 0.9375rem;
+  color: #d8e2f0;
+}
+.forge-account-field-wide {
+  grid-column: 1 / -1;
+}
+.forge-account-field > p {
+  color: #a3adbe;
+  font-size: 0.875rem;
+  line-height: 1.6;
+}
+.forge-account-field input {
+  background: #0b111a;
+  min-height: 46px;
+}
+.forge-account-field input[readonly] {
+  color: #a3adbe;
+}
+.forge-account-password {
+  position: relative;
+}
+.forge-account-password input {
+  padding-right: 47px;
+}
+.forge-account-password button {
+  display: grid;
+  place-items: center;
+  position: absolute;
+  top: 0;
+  right: 0;
+  min-width: 44px;
+  height: 100%;
+  color: #a3adbe;
+  border-radius: 5px;
+}
+.forge-account-password button:hover {
+  color: #62f0dd;
+}
+.forge-account-verification-note {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  margin-top: 18px;
+  color: #aeb9cc;
+  font-size: 0.875rem;
+  line-height: 1.7;
+}
+.forge-account-verification-note svg {
+  color: #a696ff;
+  flex-shrink: 0;
+  margin-top: 3px;
+}
+.forge-account-form-footer {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  margin-top: 22px;
+}
+.forge-account-form-footer > span {
+  color: #a3adbe;
+  font-size: 0.875rem;
+  line-height: 1.6;
+}
+.forge-account-form-footer > div {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+.forge-account-form-footer button {
+  font-size: 0.9375rem;
+}
+.forge-account-feedback {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  margin-top: 17px;
+  padding: 12px 13px;
+  border: 1px solid #62f0dd40;
+  border-radius: 6px;
+  background: #62f0dd0b;
+  color: #62f0dd;
+  font-size: 0.9375rem;
+  line-height: 1.6;
+}
+.forge-account-feedback.is-error {
+  border-color: #ff8f9140;
+  background: #ff8f910b;
+  color: #ffacae;
+}
+.forge-account-feedback svg {
+  flex-shrink: 0;
+  margin-top: 2px;
+}
+.forge-account-danger {
+  border-color: #ff8f9145;
+  background: #1b141d;
+}
+.forge-account-danger .forge-account-panel-heading > svg {
+  color: #ff8f91;
+}
+.forge-account-danger > p {
+  color: #b8adbd;
+  font-size: 0.9375rem;
+  line-height: 1.7;
+  margin-bottom: 17px;
+}
+.forge-account-content [data-slot="card"] {
+  background: #111722;
+  border-color: #2f3d50;
+}
+.forge-account-content [data-slot="card-title"] {
+  font-size: 1.25rem;
+}
+.forge-account-content [data-slot="alert"] {
+  font-size: 0.9375rem;
+}
+.forge-account-content [data-slot="label"] {
+  line-height: 1.6;
+}
+.forge-orders-overview {
+  display: grid;
+  grid-template-columns: 0.8fr 0.8fr 1.1fr;
+  gap: 10px;
+  margin-bottom: 24px;
+}
+.forge-orders-overview > div {
+  display: flex;
+  align-items: center;
+  gap: 11px;
+  min-width: 0;
+  padding: 15px;
+  border: 1px solid #2f3d50;
+  border-radius: 7px;
+  background: #141c29;
+}
+.forge-orders-overview > div > svg {
+  color: #a696ff;
+  flex-shrink: 0;
+}
+.forge-orders-overview span {
+  color: #a3adbe;
+  font-size: 0.875rem;
+}
+.forge-orders-overview strong {
+  display: block;
+  color: #e6edf7;
+  font-size: 0.9375rem;
+  margin-top: 4px;
+  font-weight: 600;
+}
+.forge-order-filters {
+  background: #111722;
+  border: 1px solid #2f3d50;
+  border-radius: 8px;
+  padding: 18px;
+}
+.forge-order-filter-heading {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+}
+.forge-order-filter-heading h2 {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 1rem;
+  font-weight: 600;
+}
+.forge-order-filter-heading h2 svg {
+  color: #62f0dd;
+}
+.forge-order-filter-heading button {
+  color: #62f0dd;
+  font-size: 0.875rem;
+  min-height: 44px;
+}
+.forge-order-filters > p {
+  color: #a3adbe;
+  font-size: 0.875rem;
+  line-height: 1.7;
+  margin-top: 10px;
+}
+.forge-order-filter-fields {
+  display: grid;
+  grid-template-columns: minmax(0, 1.5fr) minmax(0, 1fr) minmax(0, 1fr);
+  gap: 12px;
+  margin-top: 17px;
+}
+.forge-order-filter-fields label {
+  min-width: 0;
+}
+.forge-order-filter-fields label > span {
+  display: block;
+  margin-bottom: 7px;
+  color: #d6e0ee;
+  font-size: 0.875rem;
+}
+.forge-order-search > div {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 44px;
+  padding-inline: 11px;
+  border: 1px solid #425068;
+  border-radius: 5px;
+  background: #0b111a;
+}
+.forge-order-search > div:focus-within {
+  border-color: #62f0dd;
+  box-shadow: 0 0 0 2px #62f0dd20;
+}
+.forge-order-search svg {
+  flex-shrink: 0;
+  color: #a3adbe;
+}
+.forge-order-search input {
+  width: 100%;
+  min-width: 0;
+  min-height: 42px;
+  font-size: 0.9375rem;
+  background: transparent;
+  outline: none;
+}
+.forge-order-results {
+  color: #a3adbe;
+  font-size: 0.875rem;
+  line-height: 1.7;
+  margin-block: 15px;
+}
+.forge-order-list,
+.forge-order-loading {
+  display: grid;
+  gap: 16px;
+}
+.forge-order-card {
+  background: #111722;
+  border: 1px solid #304052;
+  border-radius: 9px;
+  padding: 20px;
+}
+.forge-order-card-heading {
+  display: flex;
+  align-items: flex-start;
+  gap: 13px;
+}
+.forge-order-icon {
+  display: grid;
+  place-items: center;
+  width: 44px;
+  height: 48px;
+  border: 1px solid #a696ff40;
+  border-radius: 6px;
+  background: #a696ff0c;
+  color: #a696ff;
+  flex-shrink: 0;
+}
+.forge-order-card-heading > div {
+  min-width: 0;
+}
+.forge-order-card-heading .forge-eyebrow {
+  font-size: 0.875rem;
+}
+.forge-order-card-heading h2 {
+  margin-top: 4px;
+  font-size: 1.125rem;
+  font-weight: 600;
+  line-height: 1.4;
+}
+.forge-order-card-heading time,
+.forge-order-date-missing {
+  display: block;
+  color: #a3adbe;
+  font-size: 0.875rem;
+  margin-top: 5px;
+  line-height: 1.6;
+}
+.forge-order-card-heading time span {
+  opacity: 0.8;
+  font-size: 0.875rem;
+}
+.forge-order-badge {
+  display: inline-flex;
+  align-items: center;
+  min-height: 27px;
+  padding: 5px 9px;
+  margin-left: auto;
+  border: 1px solid #a696ff40;
+  border-radius: 4px;
+  color: #c3b7ff;
+  background: #a696ff0a;
+  font-size: 0.875rem;
+  flex-shrink: 0;
+}
+.forge-order-badge:is(.is-delivered, .is-paid) {
+  color: #62f0dd;
+  border-color: #62f0dd40;
+  background: #62f0dd0a;
+}
+.forge-order-badge:is(.is-returned, .is-refunded, .is-cancelled) {
+  color: #ffacae;
+  border-color: #ff8f9140;
+  background: #ff8f910a;
+}
+.forge-order-badge:is(.is-pending, .is-processing) {
+  color: #e9ce99;
+  border-color: #e9ce9933;
+  background: #e9ce9908;
+}
+.forge-order-items {
+  display: grid;
+  gap: 10px;
+  margin-block: 18px 13px;
+  padding-top: 16px;
+  border-top: 1px solid #2e394b;
+}
+.forge-order-items > div {
+  display: flex;
+  justify-content: space-between;
+  gap: 18px;
+  font-size: 0.9375rem;
+  line-height: 1.6;
+}
+.forge-order-items > div > span {
+  min-width: 0;
+  color: #c5cfdf;
+  overflow-wrap: anywhere;
+}
+.forge-order-items small {
+  color: #a3adbe;
+  white-space: nowrap;
+}
+.forge-order-items strong {
+  font-size: 0.9375rem;
+  font-weight: 500;
+  white-space: nowrap;
+}
+.forge-order-items > p {
+  color: #a3adbe;
+  font-size: 0.875rem;
+}
+.forge-order-payment-status {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  color: #a3adbe;
+  font-size: 0.875rem;
+  line-height: 1.7;
+}
+.forge-order-payment-status > svg {
+  color: #62f0dd;
+}
+.forge-order-payment-status > span {
+  margin-left: auto;
+  color: #b7aacd;
+}
+.forge-order-card-footer {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  align-items: center;
+  gap: 16px;
+  margin-top: 17px;
+  padding-top: 17px;
+  border-top: 1px solid #2e394b;
+}
+.forge-order-card-footer > div:first-child > span {
+  display: block;
+  color: #a3adbe;
+  font-size: 0.875rem;
+  margin-bottom: 3px;
+}
+.forge-order-card-footer > div:first-child > strong {
+  font-size: 1.5rem;
+  font-weight: 650;
+  color: #f2f5fa;
+}
+.forge-order-card-footer > div:last-child {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+.forge-order-card-footer [data-slot="button"] {
+  font-size: 0.875rem;
+  padding-inline: 12px;
+}
+.forge-account-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  gap: 15px;
+  border: 1px solid #2e3b50;
+  border-radius: 9px;
+  background:
+    radial-gradient(ellipse at top, #a696ff0c, transparent 70%), #111722;
+  padding: 48px 25px;
+}
+.forge-account-state > svg {
+  color: #a696ff;
+}
+.forge-account-state h2 {
+  font-size: 1.5rem;
+  font-weight: 650;
+  line-height: 1.25;
+  letter-spacing: -0.03em;
+}
+.forge-account-state p:not(.forge-eyebrow) {
+  max-width: 440px;
+  color: #a3adbe;
+  font-size: 0.9375rem;
+  line-height: 1.8;
+}
+.forge-account-state .forge-eyebrow {
+  font-size: 0.875rem;
+}
+.forge-order-no-results {
+  padding-block: 35px;
+}
+.forge-order-pagination {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-top: 24px;
+}
+.forge-order-pagination span {
+  color: #a3adbe;
+  font:
+    0.875rem ui-monospace,
+    monospace;
+}
+.forge-order-pagination button {
+  font-size: 0.9375rem;
+}
+@media (max-width: 1100px) and (min-width: 768px) {
+  .forge-account {
+    grid-template-columns: 220px minmax(0, 1fr);
+    gap: 23px;
+  }
+  .forge-account-sidebar {
+    top: 151px;
+  }
+  .forge-account-identity {
+    padding: 16px 13px;
+    gap: 10px;
+  }
+  .forge-account-identity .forge-eyebrow {
+    font-size: 0.875rem;
+  }
+  .forge-account-sidebar nav {
+    padding: 9px;
+  }
+  .forge-account-sidebar nav a {
+    gap: 8px;
+    padding-inline: 8px;
+  }
+  .forge-account-nav-arrow {
+    display: none;
+  }
+  .forge-account-panel {
+    padding: 20px;
+  }
+  .forge-account-shortcuts,
+  .forge-order-filter-fields {
+    grid-template-columns: 1fr;
+  }
+  .forge-orders-overview {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .forge-orders-overview > div:last-child {
+    grid-column: 1 / -1;
+  }
+}
+@media (max-width: 767px) {
+  .forge-account {
+    grid-template-columns: 1fr;
+    gap: 27px;
+    padding-block: 22px 50px;
+  }
+  .forge-account-sidebar {
+    position: static;
+    max-height: none;
+  }
+  .forge-account-identity {
+    padding: 15px 16px;
+  }
+  .forge-account-identity .forge-eyebrow {
+    font-size: 0.875rem;
+  }
+  .forge-account-identity div > span {
+    font-size: 0.875rem;
+  }
+  .forge-account-sidebar nav {
+    display: flex;
+    gap: 7px;
+    overflow-x: auto;
+    padding: 11px;
+  }
+  .forge-account-sidebar nav a {
+    flex: 0 0 auto;
+    min-height: 48px;
+    padding: 10px;
+    gap: 7px;
+  }
+  .forge-account-sidebar nav a strong {
+    font-size: 0.875rem;
+  }
+  .forge-account-sidebar nav a small,
+  .forge-account-nav-arrow {
+    display: none;
+  }
+  .forge-account-sidebar nav a > svg {
+    width: 16px;
+  }
+  .forge-account-status {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 9px 18px;
+    padding: 11px 17px;
+  }
+  .forge-account-status span {
+    font-size: 0.875rem;
+  }
+  .forge-account-page-heading {
+    margin-bottom: 23px;
+  }
+  .forge-account-page-heading h1 {
+    font-size: 34px;
+  }
+  .forge-account-overview {
+    gap: 10px;
+  }
+  .forge-account-overview > div {
+    padding: 16px;
+  }
+  .forge-account-overview strong {
+    font-size: 1.25rem;
+  }
+  .forge-account-shortcuts {
+    grid-template-columns: 1fr;
+    gap: 10px;
+  }
+  .forge-account-panel {
+    padding: 19px 17px;
+  }
+  .forge-account-panel-heading {
+    gap: 10px;
+  }
+  .forge-account-panel-heading h2 {
+    font-size: 1.25rem;
+  }
+  .forge-account-form-grid {
+    grid-template-columns: 1fr;
+    gap: 17px;
+  }
+  .forge-account-form-footer {
+    align-items: stretch;
+    flex-direction: column;
+  }
+  .forge-account-form-footer > div {
+    justify-content: flex-end;
+  }
+  .forge-account-form-footer > button {
+    align-self: flex-end;
+  }
+  .forge-account-content [data-slot="input"] {
+    font-size: 1.125rem;
+  }
+  .forge-orders-overview {
+    grid-template-columns: 1fr 1fr;
+    gap: 9px;
+  }
+  .forge-orders-overview > div {
+    padding: 12px;
+    gap: 8px;
+  }
+  .forge-orders-overview > div:last-child {
+    grid-column: 1 / -1;
+  }
+  .forge-order-filter-fields {
+    grid-template-columns: 1fr 1fr;
+  }
+  .forge-order-search {
+    grid-column: 1 / -1;
+  }
+  .forge-order-search input {
+    font-size: 1.125rem;
+  }
+  .forge-order-card {
+    padding: 17px;
+  }
+  .forge-order-icon {
+    display: none;
+  }
+  .forge-order-card-heading h2 {
+    font-size: 1.125rem;
+  }
+  .forge-order-card-footer > div:last-child {
+    width: 100%;
+  }
+  .forge-order-card-footer [data-slot="button"] {
+    flex: 1;
+  }
+  .forge-order-pagination button {
+    padding-inline: 10px;
+    font-size: 0.875rem;
+  }
+  .forge-account-state {
+    padding-inline: 20px;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .forge-account-sidebar nav a {
+    transition: none;
+  }
+}

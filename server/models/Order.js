@@ -226,7 +226,7 @@ const orderSchema = new mongoose.Schema(
 
     status: {
       type: String,
-      enum: ["pending", "paid", "shipped", "delivered", "cancelled", "refunded"],
+      enum: ["pending", "paid", "processing", "payment_review", "shipped", "delivered", "cancelled", "refunded", "returned"],
       default: "pending",
     },
 
@@ -242,26 +242,32 @@ const orderSchema = new mongoose.Schema(
     // Idempotency key for order creation
     idempotencyKey: {
       type: String,
-      unique: true,
-      sparse: true,
+    },
+    requestFingerprint: String,
+    couponId: {type: mongoose.Schema.Types.ObjectId, ref:'Coupon'},
+    paymentExpiresAt: Date,
+    stripeAttempt: {
+      attemptId:String, customerId:String, sessionId:String, checkoutUrl:String,
+      paymentIntentId:String, createdAt:Date,
     },
 
     // For return window
     returnRequestedAt: Date,
     returnStatus: {
       type: String,
-      enum: ["none", "requested", "approved", "rejected"],
+      enum: ["none", "requested", "approved", "rejected", "completed"],
       default: "none",
     },
   },
   {
     timestamps: true,
+    optimisticConcurrency: true,
   }
 );
 
 // Basic indexes
 orderSchema.index({ user: 1, createdAt: -1 });
-orderSchema.index({ idempotencyKey: 1 }, { unique: true, sparse: true });
+orderSchema.index({ user: 1, idempotencyKey: 1 }, { unique: true, partialFilterExpression:{idempotencyKey:{$type:'string'}} });
 
 /**
  * Validate order totals match items/discount/shipping/tax.
@@ -329,9 +335,9 @@ orderSchema.statics.getUserOrders = function (userId, options = {}) {
 /**
  * Find order by idempotency key
  */
-orderSchema.statics.findByIdempotencyKey = function (key) {
-  if (!key) return null;
-  return this.findOne({ idempotencyKey: key });
+orderSchema.statics.findByIdempotencyKey = function (key, userId) {
+  if (!key || !userId) throw new Error('Idempotency lookup requires a key and customer ID');
+  return this.findOne({ idempotencyKey: key, user:userId });
 };
 
 /**
@@ -339,7 +345,7 @@ orderSchema.statics.findByIdempotencyKey = function (key) {
  */
 orderSchema.statics.createWithIdempotency = async function (orderData, session = null) {
   if (orderData.idempotencyKey) {
-    const existing = await this.findByIdempotencyKey(orderData.idempotencyKey);
+    const existing = await this.findByIdempotencyKey(orderData.idempotencyKey, orderData.user).session(session);
     if (existing) {
       return { order: existing, created: false };
     }

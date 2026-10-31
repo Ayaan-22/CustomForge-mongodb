@@ -1,0 +1,580 @@
+/* Order-detail-only UI; no payment, account or shared storefront overrides. */
+.forge-order-detail {
+  max-width: 1160px;
+  padding-block: 28px 70px;
+}
+.forge-order-detail > h1 {
+  margin-block: 13px;
+  font-size: 38px;
+  font-weight: 700;
+  letter-spacing: -1px;
+}
+.forge-order-detail-intro {
+  color: var(--muted-foreground);
+  font-size: 1rem;
+}
+.forge-order-detail-loading {
+  display: grid;
+  gap: 22px;
+  margin-top: 30px;
+}
+.forge-order-detail-state {
+  max-width: 660px;
+  margin: 30px auto;
+  text-align: center;
+  padding: 40px 25px;
+  border: 1px solid #a696ff40;
+  border-radius: 12px;
+  background:
+    radial-gradient(ellipse at top, #a696ff0c, transparent 60%), #111722;
+}
+.forge-order-detail-state > span {
+  display: grid;
+  place-items: center;
+  width: 75px;
+  height: 75px;
+  margin: 0 auto 26px;
+  color: #c4b6ff;
+  border: 1px solid #a696ff38;
+  border-radius: 15px;
+  background: #a696ff0b;
+}
+.forge-order-detail-state h1 {
+  margin-block: 17px;
+  font-size: clamp(27px, 4vw, 38px);
+  font-weight: 700;
+  letter-spacing: -1px;
+}
+.forge-order-detail-state > p:not(.forge-eyebrow) {
+  color: var(--muted-foreground);
+  font-size: 1rem;
+  line-height: 1.85;
+}
+.forge-order-detail-state > div {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 12px;
+  margin-top: 24px;
+}
+.forge-order-detail-state [data-slot="button"] {
+  min-height: 44px;
+}
+.forge-order-detail-back {
+  display: inline-flex;
+  align-items: center;
+  gap: 9px;
+  min-height: 44px;
+  margin-bottom: 20px;
+  color: #a7bbcf;
+  font-size: 0.875rem;
+}
+.forge-order-detail-back:hover {
+  color: var(--primary);
+}
+.forge-order-detail-heading {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 22px;
+  margin-block: 30px 20px;
+}
+.forge-order-detail-heading h1 {
+  margin-block: 12px;
+  font-size: clamp(30px, 3.6vw, 46px);
+  font-weight: 750;
+  letter-spacing: -1.3px;
+  line-height: 1.1;
+}
+.forge-order-detail-heading > div > p:last-child {
+  color: var(--muted-foreground);
+  font-size: 0.9375rem;
+  line-height: 1.7;
+}
+.forge-order-detail-status {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  padding: 10px 14px;
+  border: 1px solid #a696ff50;
+  color: #d1c6ff;
+  border-radius: 6px;
+  font-size: 0.9375rem;
+  background: #a696ff0c;
+}
+.forge-order-detail-status > span {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: currentColor;
+}
+.forge-order-detail-status:is(.is-paid, .is-shipped, .is-delivered) {
+  color: var(--primary);
+  border-color: #62f0dd50;
+  background: #62f0dd08;
+}
+.forge-order-detail-status:is(.is-cancelled, .is-returned, .is-refunded) {
+  color: #ffb7b1;
+  border-color: #ff928d45;
+  background: #ff928d08;
+}
+.forge-order-detail-signal {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 10px 23px;
+  padding-block: 13px 20px;
+  margin-bottom: 22px;
+  border-bottom: 1px solid var(--border);
+  color: #b7c5d3;
+  font-size: 0.875rem;
+}
+.forge-order-detail-signal > span {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.forge-order-detail-signal > span svg {
+  color: var(--primary);
+}
+.forge-order-detail-signal [data-slot="button"] {
+  margin-left: auto;
+  min-height: 44px;
+  font-size: 0.875rem;
+}
+.forge-order-detail-notice {
+  display: flex;
+  align-items: start;
+  gap: 12px;
+  padding: 18px 20px;
+  margin-block: 16px;
+  border: 1px solid #a696ff3a;
+  border-radius: 8px;
+  background: #a696ff08;
+  color: #bfcddd;
+  font-size: 0.9375rem;
+  line-height: 1.85;
+}
+.forge-order-detail-notice > svg {
+  flex-shrink: 0;
+  color: #c8baff;
+  margin-top: 3px;
+}
+.forge-order-detail-notice > div {
+  flex: 1;
+  min-width: 0;
+}
+.forge-order-detail-notice strong {
+  color: #e1dafa;
+  font-size: 1rem;
+}
+.forge-order-detail-notice.is-error {
+  border-color: #ff928d40;
+  background: #ff928d06;
+}
+.forge-order-detail-notice.is-error > svg {
+  color: #ffb6b0;
+}
+.forge-order-detail-notice [data-slot="button"] {
+  flex-shrink: 0;
+  min-height: 44px;
+  font-size: 0.875rem;
+}
+.forge-order-detail-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 340px;
+  gap: 25px;
+  align-items: start;
+  margin-block: 28px;
+}
+.forge-order-detail-sections {
+  display: grid;
+  gap: 20px;
+  min-width: 0;
+}
+.forge-order-detail-card {
+  min-width: 0;
+  padding: 25px;
+  border: 1px solid #2f3d4e;
+  border-radius: 10px;
+  background: #111722;
+}
+.forge-order-detail-card > header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 15px;
+  margin-bottom: 22px;
+}
+.forge-order-detail-card h2 {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 1.25rem;
+  font-weight: 650;
+  letter-spacing: -0.3px;
+}
+.forge-order-detail-card > header > div > h2 {
+  margin-top: 10px;
+}
+.forge-order-detail-card > header > span {
+  color: var(--muted-foreground);
+  font-size: 0.875rem;
+}
+.forge-order-detail-card > header svg {
+  flex-shrink: 0;
+  color: var(--primary);
+}
+.forge-order-detail-items {
+  display: grid;
+  gap: 18px;
+  list-style: none;
+}
+.forge-order-detail-items > li {
+  display: flex;
+  align-items: start;
+  gap: 15px;
+  min-width: 0;
+  padding-bottom: 18px;
+  border-bottom: 1px solid #283646;
+}
+.forge-order-detail-items > li:last-child {
+  padding-bottom: 0;
+  border-bottom: 0;
+}
+.forge-order-item-number {
+  flex-shrink: 0;
+  display: grid;
+  place-items: center;
+  width: 37px;
+  height: 37px;
+  font:
+    0.875rem ui-monospace,
+    monospace;
+  color: var(--primary);
+  background: #62f0dd08;
+  border: 1px solid #62f0dd29;
+  border-radius: 4px;
+}
+.forge-order-detail-items > li > div:not(.forge-order-item-price) {
+  flex: 1;
+  min-width: 0;
+}
+.forge-order-detail-items h3 {
+  font-size: 1rem;
+  font-weight: 600;
+  line-height: 1.7;
+  overflow-wrap: anywhere;
+}
+.forge-order-detail-items p {
+  margin-top: 6px;
+  color: var(--muted-foreground);
+  font-size: 0.875rem;
+}
+.forge-order-detail-items a {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  min-height: 44px;
+  color: var(--primary);
+  font-size: 0.875rem;
+}
+.forge-order-item-price {
+  max-width: 150px;
+  text-align: right;
+}
+.forge-order-item-price > strong {
+  display: block;
+  font-size: 1rem;
+  line-height: 1.7;
+  overflow-wrap: anywhere;
+}
+.forge-order-item-price > span {
+  display: block;
+  margin-top: 6px;
+  color: var(--muted-foreground);
+  font-size: 0.875rem;
+  line-height: 1.7;
+}
+.forge-order-shipping {
+  display: grid;
+  gap: 7px;
+  padding-left: 29px;
+  color: #b0bfd0;
+  font-size: 1rem;
+  font-style: normal;
+  line-height: 1.75;
+  overflow-wrap: anywhere;
+}
+.forge-order-shipping strong {
+  color: var(--foreground);
+  font-weight: 600;
+}
+.forge-order-detail-empty {
+  color: var(--muted-foreground);
+  font-size: 0.9375rem;
+  line-height: 1.8;
+}
+.forge-order-actions > p {
+  color: var(--muted-foreground);
+  font-size: 0.9375rem;
+  line-height: 1.85;
+}
+.forge-order-actions > div {
+  margin-top: 19px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+.forge-order-actions [data-slot="button"] {
+  min-height: 44px;
+}
+.forge-order-actions .forge-order-cancel-button {
+  border-color: #ff928d50;
+  color: #ffb8b3;
+  background: #ff928d05;
+}
+.forge-order-actions > .forge-order-action-inline-error {
+  margin-top: 14px;
+  color: #ffc3bd;
+}
+.forge-order-detail-summary {
+  position: sticky;
+  top: 150px;
+  border-top: 2px solid var(--primary);
+}
+.forge-order-amounts {
+  display: grid;
+  gap: 15px;
+}
+.forge-order-amounts > div {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 15px;
+  color: #b4c2d2;
+  font-size: 0.9375rem;
+}
+.forge-order-amounts > div > dd {
+  text-align: right;
+}
+.forge-order-amounts > div:last-child {
+  border-top: 1px solid var(--border);
+  padding-top: 18px;
+  margin-top: 4px;
+  color: var(--foreground);
+  font-size: 1.5rem;
+  font-weight: 650;
+}
+.forge-order-amounts > div:last-child > dd:not(.is-unrecorded) {
+  color: var(--primary);
+}
+.forge-order-amounts dd.is-unrecorded {
+  color: var(--muted-foreground);
+  font-size: 0.875rem;
+  font-weight: 400;
+}
+.forge-order-reference {
+  display: grid;
+  gap: 13px;
+  margin-top: 25px;
+  padding-top: 20px;
+  border-top: 1px solid var(--border);
+  font-size: 0.875rem;
+}
+.forge-order-reference dt {
+  color: var(--muted-foreground);
+  margin-bottom: 5px;
+}
+.forge-order-reference dd {
+  color: #c8d4e3;
+  overflow-wrap: anywhere;
+  line-height: 1.75;
+}
+.forge-order-record-note {
+  display: flex;
+  align-items: start;
+  gap: 7px;
+  margin-top: 22px;
+  color: var(--muted-foreground);
+  font-size: 0.875rem;
+  line-height: 1.8;
+}
+.forge-order-record-note > svg {
+  flex-shrink: 0;
+  color: var(--primary);
+  margin-top: 2px;
+}
+.forge-order-invoice-area {
+  margin-top: 40px;
+}
+.forge-order-invoice-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 15px;
+}
+.forge-order-invoice-heading h2 {
+  margin-top: 10px;
+  font-size: 28px;
+  font-weight: 700;
+  letter-spacing: -0.6px;
+}
+.forge-order-invoice-heading > svg {
+  color: var(--primary);
+}
+.forge-order-action-dialog {
+  padding: 28px;
+  max-height: 92dvh;
+  overflow-y: auto;
+  border-color: #445168;
+  background: linear-gradient(145deg, #182236, #0c121c 70%);
+}
+.forge-order-action-dialog [data-slot="alert-dialog-header"] {
+  text-align: left;
+}
+.forge-order-dialog-icon {
+  display: grid;
+  place-items: center;
+  width: 58px;
+  height: 58px;
+  margin-bottom: 16px;
+  color: #c8baff;
+  border: 1px solid #a696ff45;
+  border-radius: 11px;
+  background: #a696ff0a;
+}
+.forge-order-dialog-icon.is-cancel {
+  color: #ffc0ba;
+  border-color: #ff928d45;
+  background: #ff928d08;
+}
+.forge-order-action-dialog [data-slot="alert-dialog-title"] {
+  margin-block: 10px;
+  font-size: 25px;
+  letter-spacing: -0.6px;
+}
+.forge-order-action-dialog [data-slot="alert-dialog-description"] {
+  color: #adbdcf;
+  font-size: 0.9375rem;
+  line-height: 1.9;
+}
+.forge-order-action-error {
+  display: flex;
+  align-items: start;
+  gap: 10px;
+  padding: 15px;
+  border: 1px solid #ff928d40;
+  border-radius: 6px;
+  background: #ff928d07;
+  color: #ffc4bd;
+  font-size: 0.9375rem;
+  line-height: 1.8;
+}
+.forge-order-action-error > svg {
+  flex-shrink: 0;
+  margin-top: 3px;
+}
+.forge-order-action-error strong {
+  display: block;
+  font-size: 0.9375rem;
+  margin-bottom: 4px;
+}
+.forge-order-action-review {
+  padding: 15px;
+  border: 1px solid #a696ff35;
+  border-radius: 6px;
+  color: #bfcadb;
+  background: #a696ff06;
+  font-size: 0.875rem;
+  line-height: 1.85;
+}
+.forge-order-action-review [data-slot="button"] {
+  margin-top: 13px;
+  min-height: 44px;
+}
+.forge-order-dialog-status {
+  color: #bdccdd;
+  font-size: 0.9375rem;
+  line-height: 1.8;
+}
+.forge-order-action-dialog [data-slot="alert-dialog-footer"] > button {
+  min-height: 44px;
+  white-space: normal;
+}
+.forge-order-action-dialog .forge-order-dialog-cancel {
+  color: #1c1010;
+  background: #ffaaa1;
+  border-color: #ffaaa1;
+}
+.forge-order-action-dialog .forge-order-dialog-cancel:hover:not(:disabled) {
+  background: #ffc4be;
+}
+@media (max-width: 1023px) {
+  .forge-order-detail-layout {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .forge-order-detail-summary {
+    position: static;
+  }
+}
+@media (max-width: 639px) {
+  .forge-order-detail {
+    padding-block: 20px 45px;
+  }
+  .forge-order-detail-heading {
+    flex-wrap: wrap;
+    gap: 13px;
+  }
+  .forge-order-detail-card {
+    padding: 20px;
+  }
+  .forge-order-detail-items > li {
+    flex-wrap: wrap;
+    gap: 10px;
+  }
+  .forge-order-item-number {
+    width: 29px;
+    height: 29px;
+  }
+  .forge-order-detail-items > li > div:not(.forge-order-item-price) {
+    flex-basis: calc(100% - 39px);
+  }
+  .forge-order-item-price {
+    margin-left: 39px;
+    text-align: left;
+    max-width: none;
+  }
+  .forge-order-detail-notice {
+    flex-wrap: wrap;
+    padding: 17px;
+  }
+  .forge-order-detail-notice > div {
+    flex-basis: calc(100% - 33px);
+  }
+  .forge-order-detail-notice > button {
+    margin-left: 31px;
+  }
+  .forge-order-detail-signal > button {
+    margin-left: 0;
+  }
+  .forge-order-action-dialog {
+    padding: 22px;
+  }
+  .forge-order-detail-state > div {
+    display: grid;
+  }
+}
+@media print {
+  .forge-order-detail.forge-order-page > .forge-order-invoice-area {
+    display: block !important;
+    margin: 0 !important;
+  }
+  .forge-order-invoice-area > :not(.forge-invoice) {
+    display: none !important;
+  }
+  .forge-order-detail > :not(.forge-order-invoice-area),
+  .forge-order-invoice-heading {
+    display: none !important;
+  }
+}

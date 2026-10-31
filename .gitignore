@@ -1,4 +1,6 @@
 # Logs
+.local/
+.forge-preview/
 logs
 *.log
 npm-debug.log*

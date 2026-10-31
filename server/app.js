@@ -1,0 +1,55 @@
+import './config/env.js';
+import express from 'express';
+import mongoose from 'mongoose';
+import cors from 'cors';
+import cookieParser from 'cookie-parser';
+import helmet from 'helmet';
+import compression from 'compression';
+import {randomUUID} from 'node:crypto';
+import path from 'node:path';
+import {fileURLToPath} from 'node:url';
+import authRoutes from './routes/authRoutes.js';
+import productRoutes from './routes/productRoutes.js';
+import reviewRoutes from './routes/reviewRoutes.js';
+import userRoutes from './routes/userRoutes.js';
+import cartRoutes from './routes/cartRoutes.js';
+import orderRoutes from './routes/orderRoutes.js';
+import paymentRoutes from './routes/paymentRoutes.js';
+import adminRoutes from './routes/adminRoutes.js';
+import {handleWebhook} from './controllers/paymentController.js';
+import {csrfProtection} from './middleware/csrfMiddleware.js';
+import {errorHandler} from './middleware/errorMiddleware.js';
+import {apiLimiter,authLimiter,webhookLimiter} from './config/rateLimit.js';
+import {getTrustProxy,validateSecurityConfiguration} from './config/security.js';
+import AppError from './utils/appError.js';
+
+export function createApp() {
+  validateSecurityConfiguration();
+  const app = express();
+  app.disable('x-powered-by');
+  app.set('trust proxy',getTrustProxy(process.env.TRUST_PROXY || 'false'));
+  app.use(helmet());
+  const origins = [process.env.CLIENT_URL || 'http://localhost:3000', process.env.ADMIN_URL || 'http://localhost:3001'];
+  app.use(cors({origin:(origin,done)=>done(null,!origin || origins.includes(origin)),credentials:true,
+    allowedHeaders:['Content-Type','Authorization','x-csrf-token','x-2fa-token','Idempotency-Key'],methods:['GET','POST','PUT','PATCH','DELETE','OPTIONS']}));
+  app.use((req,res,next)=>{req.requestId=randomUUID();res.setHeader('X-Request-Id',req.requestId);next();});
+  app.post('/api/v1/payment/webhook',webhookLimiter,express.raw({type:'application/json',limit:'1mb'}),handleWebhook);
+  app.use(express.json({limit:'256kb'}));
+  app.use(cookieParser());
+  app.use(compression());
+  app.use('/uploads',express.static(path.join(path.dirname(fileURLToPath(import.meta.url)),'public/uploads')));
+  app.use('/api/v1/media',express.static(path.join(path.dirname(fileURLToPath(import.meta.url)),'public/uploads'),{immutable:true,maxAge:'1y',dotfiles:'deny'}));
+  app.get('/api/v1/health',(req,res)=>res.status(mongoose.connection.readyState===1?200:503).json({status:mongoose.connection.readyState===1?'success':'unavailable',database:'mongodb',requestId:req.requestId}));
+  app.use('/api/v1',apiLimiter,csrfProtection);
+  app.use('/api/v1/auth',authLimiter,authRoutes);
+  app.use('/api/v1/products',productRoutes);
+  app.use('/api/v1/reviews',reviewRoutes);
+  app.use('/api/v1/users',userRoutes);
+  app.use('/api/v1/cart',cartRoutes);
+  app.use('/api/v1/orders',orderRoutes);
+  app.use('/api/v1/payment',paymentRoutes);
+  app.use('/api/v1/admin',adminRoutes);
+  app.use((req,res,next)=>next(new AppError('Route not found',404)));
+  app.use(errorHandler);
+  return app;
+}

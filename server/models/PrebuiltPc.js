@@ -242,8 +242,6 @@ prebuiltPcSchema.pre(/^find/, function (next) {
     path: "productDetails",
     select: "name category brand finalPrice images ratings stock",
     options: { lean: true }
-  }).catch(err => {
-    console.error('Population failed:', err.message);
   });
   next();
 });

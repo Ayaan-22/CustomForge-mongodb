@@ -38,12 +38,12 @@ const productSchema = new mongoose.Schema(
       type: String,
       required: [true, "Category is required"],
       enum: [
-        "Prebuilt PCs", "CPU", "GPU", "Motherboard", "RAM", "Storage", 
-        "Power Supply", "Cooler", "Case", "OS", "Networking", "RGB", 
-        "CaptureCard", "Monitor", "Keyboard", "Mouse", "Mousepad", 
-        "Headset", "Speakers", "Controller", "ExternalStorage", "VR", 
-        "StreamingGear", "Microphone", "Webcam", "GamingChair", 
-        "GamingDesk", "SoundCard", "Cables", "GamingLaptop", "Games", 
+        "Prebuilt PCs", "CPU", "GPU", "Motherboard", "RAM", "Storage",
+        "Power Supply", "Cooler", "Case", "OS", "Networking", "RGB",
+        "CaptureCard", "Monitor", "Keyboard", "Mouse", "Mousepad",
+        "Headset", "Speakers", "Controller", "ExternalStorage", "VR",
+        "StreamingGear", "Microphone", "Webcam", "GamingChair",
+        "GamingDesk", "SoundCard", "Cables", "GamingLaptop", "Games",
         "PCGames", "ConsoleGames", "VRGames",
       ],
     },
@@ -87,7 +87,7 @@ const productSchema = new mongoose.Schema(
         required: [true, "At least one image is required"],
         validate: {
           validator: function (v) {
-            return validator.isURL(v) && /\.(jpg|jpeg|png|webp|avif)$/i.test(v);
+            return /^\/(?!\/)[a-zA-Z0-9/_.,@%+ -]+$/.test(v) || validator.isURL(v, { protocols: ["https"], require_protocol: true });
           },
           message: (props) => `${props.value} is not a valid image URL`,
         },
@@ -170,7 +170,7 @@ const productSchema = new mongoose.Schema(
 productSchema.index({ name: "text", description: "text", brand: "text" });
 productSchema.index({ category: 1, "ratings.average": -1, isActive: 1 });
 productSchema.index({ isFeatured: 1, isActive: 1, category: 1 });
-productSchema.index({ sku: 1 }, { unique: true });
+
 
 /**
  * Virtual: Get all reviews for this product
@@ -250,19 +250,19 @@ productSchema.statics.executeInTransaction = async (operations) => {
 productSchema.statics.updateStockAtomic = async function(productId, quantity) {
   const result = await this.findByIdAndUpdate(
     productId,
-    { 
+    {
       $inc: { stock: quantity },
-      $set: { 
-        availability: quantity > 0 ? "In Stock" : "Out of Stock" 
+      $set: {
+        availability: quantity > 0 ? "In Stock" : "Out of Stock"
       }
     },
     { new: true, runValidators: true }
   );
-  
+
   if (!result) {
     throw new Error('Product not found');
   }
-  
+
   return result;
 };
 
@@ -284,8 +284,8 @@ productSchema.methods.incrementSales = async function (quantity = 1) {
 productSchema.methods.updateStock = async function (newStock) {
   const result = await this.constructor.findByIdAndUpdate(
     this._id,
-    { 
-      $set: { 
+    {
+      $set: {
         stock: newStock,
         availability: newStock > 0 ? "In Stock" : "Out of Stock"
       }

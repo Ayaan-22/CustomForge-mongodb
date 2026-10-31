@@ -1,56 +1,13 @@
-doctype html
-html
-  head
-    meta(charset="UTF-8")
-    title Welcome to GameShop!
-    style.
-      body {
-        font-family: 'Arial', sans-serif;
-        background-color: #e9ecef;
-        margin: 0;
-        padding: 0;
-        display: flex;
-        justify-content: center;
-        align-items: center;
-        height: 100vh;
-      }
-      .container {
-        background: #ffffff;
-        padding: 30px;
-        border-radius: 10px;
-        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-        text-align: center;
-        max-width: 400px;
-        width: 100%;
-      }
-      h1 {
-        color: #343a40;
-        font-size: 24px;
-        margin-bottom: 20px;
-      }
-      p {
-        color: #6c757d;
-        font-size: 16px;
-        margin-bottom: 20px;
-        line-height: 1.5;
-      }
-      a {
-        display: inline-block;
-        padding: 12px 25px;
-        background: #007bff;
-        color: #ffffff;
-        text-decoration: none;
-        border-radius: 5px;
-        font-size: 16px;
-        font-weight: bold;
-        transition: background 0.3s ease;
-      }
-      a:hover {
-        background: #0056b3;
-      }
-  body
-    .container
-      h1 Welcome, #{firstName}!
-      p Thanks for joining GameShop. We're excited to have you!
-      p Click the button below to explore our store.
-      a(href=url) Visit GameShop
+extends baseEmail
+block settings
+  - const preheader = verifyEmail ? 'One more step: verify your email to activate your CustomForge account.' : 'Welcome to CustomForge. Discover the gear for your next setup.'
+  - const eyebrow = 'PLAYER ONE / WELCOME'
+  - const heading = 'Your next level starts here.'
+  - const actionLabel = verifyEmail ? 'Verify my email' : 'Explore the store'
+block content
+  +paragraph('Welcome, ' + firstName + '.')
+  +paragraph('Make room for your next upgrade. Explore gaming hardware, discover your next build, and find gear that fits the way you play.')
+  if verifyEmail
+    +notice('Activate your account', 'Verify your email address to finish setting up your account. If you did not create this account, you can ignore this message.')
+  else
+    +notice('Your setup. Your play style.', 'Explore the catalog and manage your orders from your CustomForge account.')

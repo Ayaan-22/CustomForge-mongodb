@@ -1,0 +1,479 @@
+/* Address editor and cards load only on address management routes. */
+.forge-address-management {
+  min-width: 0;
+  padding-bottom: 26px;
+}
+.forge-address-heading {
+  display: flex;
+  justify-content: space-between;
+  align-items: start;
+  gap: 22px;
+}
+.forge-address-heading > div {
+  min-width: 0;
+}
+.forge-address-heading > button {
+  flex-shrink: 0;
+  margin-top: 18px;
+}
+.forge-address-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 18px;
+  padding-block: 18px;
+  border-block: 1px solid #2b394a;
+  margin-bottom: 24px;
+}
+.forge-address-toolbar > div {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 10px;
+  font-size: 0.9375rem;
+  color: #c3cee0;
+}
+.forge-address-toolbar svg {
+  color: #62f0dd;
+}
+.forge-address-toolbar small {
+  color: #a3adbe;
+}
+.forge-address-feedback {
+  display: flex;
+  align-items: start;
+  gap: 10px;
+  border: 1px solid #62f0dd50;
+  background: #62f0dd08;
+  color: #9af1e5;
+  padding: 14px 16px;
+  margin-block: 16px;
+  border-radius: 7px;
+  font-size: 0.9375rem;
+  line-height: 1.85;
+  overflow-wrap: anywhere;
+}
+.forge-address-feedback svg {
+  flex-shrink: 0;
+  margin-top: 3px;
+}
+.forge-address-feedback.is-error {
+  color: #ffb4ac;
+  border-color: #ff8c8155;
+  background: #ff8c8109;
+}
+.forge-address-editor {
+  padding: 26px;
+  border: 1px solid #62f0dd55;
+  background:
+    radial-gradient(ellipse at top right, #62f0dd07, transparent 65%), #111722;
+  border-radius: 10px;
+  margin-block: 24px 32px;
+}
+.forge-address-editor-heading {
+  display: flex;
+  align-items: start;
+  gap: 15px;
+  padding-bottom: 25px;
+  border-bottom: 1px solid #2b394a;
+  margin-bottom: 25px;
+}
+.forge-address-editor-heading > span {
+  display: grid;
+  place-items: center;
+  color: #62f0dd;
+  background: #62f0dd0a;
+  border: 1px solid #62f0dd40;
+  border-radius: 7px 3px 7px 3px;
+  width: 43px;
+  height: 47px;
+  flex-shrink: 0;
+}
+.forge-address-editor-heading h2 {
+  font-size: 1.5rem;
+  font-weight: 700;
+  letter-spacing: -0.6px;
+  line-height: 1.4;
+  margin-block: 8px;
+  scroll-margin-top: 150px;
+}
+.forge-address-editor-heading p:last-child {
+  color: #a3adbe;
+  font-size: 0.9375rem;
+  line-height: 1.85;
+}
+.forge-address-field-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 23px 20px;
+}
+.forge-address-field {
+  min-width: 0;
+}
+.forge-address-field.is-wide {
+  grid-column: 1 / -1;
+}
+.forge-address-field label {
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+  font-size: 0.9375rem;
+  color: #d5dfed;
+  margin-bottom: 10px;
+}
+.forge-address-field label > span {
+  color: #62f0dd;
+}
+.forge-address-field label small {
+  margin-left: auto;
+  color: #a3adbe;
+  font-size: 0.875rem;
+  font-weight: 400;
+}
+.forge-address-field :is(input, textarea) {
+  min-height: 46px;
+  background: #090e17;
+  border: 1px solid #3b4b61;
+  color: #f2f5fa;
+  border-radius: 6px;
+  font-size: 1.125rem;
+  box-shadow: none;
+}
+.forge-address-field textarea {
+  resize: vertical;
+  min-height: 100px;
+  line-height: 1.9;
+}
+.forge-address-field :is(input, textarea):focus-visible {
+  border-color: #62f0dd;
+  outline: 2px solid #62f0dd;
+  outline-offset: 3px;
+}
+.forge-address-field :is(input, textarea)[aria-invalid="true"] {
+  border-color: #ff8c81;
+}
+.forge-address-field-help {
+  color: #a3adbe;
+  font-size: 0.875rem;
+  line-height: 1.9;
+  margin-top: 8px;
+}
+.forge-address-field-error {
+  color: #ffb4ac;
+  font-size: 0.875rem;
+  line-height: 1.8;
+  margin-top: 8px;
+}
+.forge-address-form-footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 20px;
+  padding-top: 24px;
+  border-top: 1px solid #2b394a;
+  margin-top: 28px;
+}
+.forge-address-form-footer > p {
+  color: #a3adbe;
+  font-size: 0.875rem;
+  line-height: 1.8;
+  max-width: 230px;
+}
+.forge-address-form-footer > div {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 9px;
+}
+.forge-address-form-footer [data-slot="button"] {
+  font-size: 0.875rem;
+}
+.forge-address-list-heading {
+  display: flex;
+  justify-content: space-between;
+  align-items: end;
+  gap: 22px;
+  margin-block: 28px 20px;
+}
+.forge-address-list-heading h2 {
+  font-size: 1.5rem;
+  font-weight: 700;
+  letter-spacing: -0.6px;
+}
+.forge-address-list-heading p {
+  color: #a3adbe;
+  font-size: 0.875rem;
+  line-height: 1.9;
+  max-width: 310px;
+}
+.forge-address-list {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 18px;
+}
+.forge-address-card {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  padding: 23px;
+  border: 1px solid #344358;
+  border-radius: 10px;
+  background: #111722;
+}
+.forge-address-card.is-default {
+  border-color: #62f0dd60;
+  background:
+    radial-gradient(ellipse at top right, #62f0dd0a, transparent 75%), #111722;
+}
+.forge-address-card-heading {
+  display: flex;
+  align-items: start;
+  flex-wrap: wrap;
+  gap: 11px;
+  margin-bottom: 21px;
+}
+.forge-address-card-heading > span:first-child {
+  color: #a696ff;
+  padding-top: 3px;
+}
+.forge-address-card-heading > div {
+  min-width: 0;
+  flex: 1;
+}
+.forge-address-card-heading .forge-eyebrow {
+  font-size: 0.875rem;
+  letter-spacing: .05em;
+  overflow-wrap: anywhere;
+}
+.forge-address-card-heading h3 {
+  font-size: 1.125rem;
+  font-weight: 650;
+  line-height: 1.6;
+  margin-top: 6px;
+  overflow-wrap: anywhere;
+}
+.forge-address-default {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  color: #62f0dd;
+  background: #62f0dd0a;
+  border: 1px solid #62f0dd40;
+  padding: 5px 6px;
+  border-radius: 4px;
+  font-size: 0.875rem;
+}
+.forge-address-card address {
+  font-style: normal;
+  font-size: 0.9375rem;
+  line-height: 1.95;
+  color: #b6c3d5;
+  overflow-wrap: anywhere;
+}
+.forge-address-street {
+  white-space: pre-wrap;
+}
+.forge-address-card address > span {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.875rem;
+  margin-top: 11px;
+  color: #a3adbe;
+}
+.forge-address-card-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  padding-top: 22px;
+  margin-top: auto;
+}
+.forge-address-card-actions [data-slot="button"] {
+  min-height: 44px;
+  padding-inline: 10px;
+  font-size: 0.875rem;
+  gap: 6px;
+}
+.forge-address-delete {
+  color: #ffb4ac;
+}
+.forge-address-repair {
+  display: flex;
+  align-items: start;
+  gap: 7px;
+  font-size: 0.875rem;
+  color: #e6c18c;
+  line-height: 1.85;
+  margin-top: 18px;
+}
+.forge-address-repair svg {
+  flex-shrink: 0;
+  margin-top: 3px;
+}
+.forge-address-card-note {
+  display: flex;
+  align-items: start;
+  gap: 7px;
+  color: #a3adbe;
+  font-size: 0.875rem;
+  line-height: 1.9;
+  margin-top: 13px;
+}
+.forge-address-card-note svg {
+  flex-shrink: 0;
+  margin-top: 3px;
+  color: #62f0dd;
+}
+.forge-address-empty {
+  display: grid;
+  justify-items: center;
+  gap: 15px;
+  padding: 40px 24px;
+  border: 1px dashed #45516a;
+  border-radius: 10px;
+  background: #111722;
+  text-align: center;
+}
+.forge-address-empty > svg {
+  color: #a696ff;
+}
+.forge-address-empty h2 {
+  font-size: 24px;
+  font-weight: 700;
+  letter-spacing: -0.5px;
+}
+.forge-address-empty > p:not(.forge-eyebrow) {
+  color: #a3adbe;
+  font-size: 1rem;
+  line-height: 1.8;
+  max-width: 440px;
+}
+.forge-address-load-error {
+  display: flex;
+  align-items: start;
+  gap: 15px;
+  padding: 22px;
+  border: 1px solid #ff8c8145;
+  background: #111722;
+  border-radius: 8px;
+  margin-block: 22px;
+}
+.forge-address-load-error > svg {
+  color: #ffb4ac;
+  flex-shrink: 0;
+}
+.forge-address-load-error > div {
+  min-width: 0;
+  flex: 1;
+}
+.forge-address-load-error h2 {
+  font-size: 1.125rem;
+  font-weight: 600;
+  line-height: 1.7;
+}
+.forge-address-load-error p {
+  color: #a3adbe;
+  font-size: 0.9375rem;
+  line-height: 1.9;
+  margin-top: 8px;
+  overflow-wrap: anywhere;
+}
+.forge-address-delete-dialog {
+  border: 1px solid #50526a;
+  background: #111722;
+  padding: 28px;
+  max-height: 90dvh;
+  overflow-y: auto;
+}
+.forge-address-dialog-icon {
+  display: grid;
+  place-items: center;
+  width: 48px;
+  height: 48px;
+  color: #ffb4ac;
+  border: 1px solid #ff8c8145;
+  background: #ff8c810a;
+  border-radius: 8px;
+  margin-bottom: 9px;
+}
+.forge-address-delete-dialog [data-slot="alert-dialog-description"] {
+  color: #a3adbe;
+  font-size: 1rem;
+  line-height: 1.9;
+}
+.forge-address-dialog-preview {
+  padding: 16px;
+  background: #0b111a;
+  border: 1px solid #334257;
+  border-radius: 7px;
+  font-size: 0.9375rem;
+  color: #b6c3d5;
+  line-height: 1.9;
+  overflow-wrap: anywhere;
+}
+.forge-address-dialog-preview strong {
+  color: #e6edf8;
+}
+.forge-address-dialog-preview p {
+  white-space: pre-wrap;
+}
+.forge-address-management :is(a, button):focus-visible,
+.forge-address-delete-dialog :is(a, button):focus-visible {
+  outline: 2px solid #62f0dd;
+  outline-offset: 4px;
+}
+@media (max-width: 1100px) {
+  .forge-address-list {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .forge-address-heading {
+    flex-direction: column;
+    gap: 10px;
+  }
+  .forge-address-heading > button {
+    margin-top: 0;
+  }
+}
+@media (max-width: 600px) {
+  .forge-address-editor {
+    padding: 20px;
+  }
+  .forge-address-field-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .forge-address-list-heading {
+    display: block;
+  }
+  .forge-address-list-heading p {
+    margin-top: 10px;
+    max-width: none;
+  }
+  .forge-address-form-footer {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 13px;
+  }
+  .forge-address-form-footer > p {
+    max-width: none;
+  }
+  .forge-address-form-footer > div {
+    justify-content: flex-end;
+  }
+  .forge-address-toolbar {
+    flex-wrap: wrap;
+  }
+  .forge-address-load-error {
+    flex-wrap: wrap;
+  }
+  .forge-address-load-error > div {
+    flex-basis: 75%;
+  }
+  .forge-address-card {
+    padding: 20px;
+  }
+  .forge-address-editor-heading > span {
+    display: none;
+  }
+  .forge-address-delete-dialog {
+    padding: 22px;
+  }
+}

@@ -1,0 +1,406 @@
+/* Cart only: high-contrast purchase controls and compact mobile review. */
+.forge-cart-page {
+  padding-block: 32px 64px;
+}
+.forge-cart-page h1 {
+  font-size: clamp(32px, 4.5vw, 52px);
+  font-weight: 750;
+  letter-spacing: -0.045em;
+  line-height: 1.1;
+}
+.forge-cart-page h1 span {
+  color: var(--primary);
+}
+.forge-cart-page .forge-stepper {
+  margin-bottom: 32px;
+}
+.forge-cart-heading {
+  display: flex;
+  justify-content: space-between;
+  align-items: end;
+  gap: 24px;
+  margin-bottom: 28px;
+}
+.forge-cart-heading h1 {
+  margin: 12px 0;
+}
+.forge-cart-heading p:not(.forge-eyebrow) {
+  color: var(--muted-foreground);
+  font-size: 1.125rem;
+}
+.forge-cart-heading > a {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--muted-foreground);
+  font-size: 1rem;
+  padding-block: 12px;
+  white-space: nowrap;
+}
+.forge-cart-heading a:hover,
+.forge-cart-item h2 a:hover {
+  color: var(--primary);
+}
+.forge-cart-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 350px;
+  gap: 28px;
+  align-items: start;
+}
+.forge-cart-products {
+  min-width: 0;
+  display: grid;
+  gap: 12px;
+}
+.forge-cart-item {
+  display: grid;
+  grid-template-columns: 132px minmax(0, 1fr);
+  gap: 16px 20px;
+  padding: 16px;
+  background: linear-gradient(120deg, #151d2b, #111722 70%);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+}
+.forge-cart-item[aria-busy="true"] {
+  opacity: 0.65;
+}
+.forge-cart-image {
+  position: relative;
+  width: 132px;
+  height: 132px;
+  border-radius: 8px;
+  background: #1d2635;
+  grid-row: span 2;
+  overflow: hidden;
+}
+.forge-cart-meta {
+  color: var(--forge-violet);
+  font:
+    0.875rem/1.5 ui-monospace,
+    monospace;
+  text-transform: uppercase;
+  letter-spacing: .05em;
+  margin-bottom: 7px;
+}
+.forge-cart-item h2 {
+  font-size: 1.125rem;
+  font-weight: 650;
+  line-height: 1.4;
+  overflow-wrap: anywhere;
+}
+.forge-cart-stock {
+  display: flex;
+  gap: 5px;
+  align-items: center;
+  color: var(--primary);
+  font-size: 0.875rem;
+  margin: 8px 0;
+}
+.forge-cart-stock.is-warning {
+  color: var(--destructive);
+}
+.forge-cart-unit {
+  font:
+    1rem/1.5 ui-monospace,
+    monospace;
+}
+.forge-cart-unit span {
+  color: var(--muted-foreground);
+  font-size: 0.875rem;
+}
+.forge-cart-item-controls {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+.forge-cart-quantity {
+  display: flex;
+  align-items: center;
+  background: var(--background);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+}
+.forge-cart-quantity > span {
+  min-width: 30px;
+  text-align: center;
+  font:
+    1rem/1.5 ui-monospace,
+    monospace;
+}
+.forge-cart-quantity button {
+  width: 44px;
+  border-radius: 4px;
+}
+.forge-cart-line-total {
+  margin-left: auto;
+  font:
+    600 1.125rem/1.5 ui-monospace,
+    monospace;
+  white-space: nowrap;
+}
+.forge-cart-remove {
+  color: var(--muted-foreground);
+  flex-shrink: 0;
+}
+.forge-cart-remove:hover {
+  color: var(--destructive);
+}
+.forge-cart-item-notice {
+  grid-column: 1/-1;
+  color: var(--destructive);
+  font-size: 0.9375rem;
+  padding-top: 10px;
+  border-top: 1px solid var(--border);
+}
+.forge-cart-list-footer {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  justify-content: space-between;
+  padding: 8px 0;
+}
+.forge-cart-list-footer p {
+  max-width: 350px;
+  color: var(--muted-foreground);
+  font-size: 0.9375rem;
+  line-height: 1.6;
+}
+.forge-cart-list-footer button {
+  color: var(--muted-foreground);
+  flex-shrink: 0;
+}
+.forge-cart-summary {
+  position: sticky;
+  top: 150px;
+  padding: 24px;
+  border: 1px solid #62f0dd36;
+  border-radius: 12px;
+  background: linear-gradient(155deg, #15292e, #111722 35%);
+  display: grid;
+  gap: 20px;
+  min-width: 0;
+}
+.forge-cart-summary h2 {
+  font-size: 1.5rem;
+  font-weight: 650;
+  letter-spacing: -0.03em;
+  margin-top: -8px;
+}
+.forge-cart-summary-count {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  color: var(--muted-foreground);
+  font-size: 0.9375rem;
+  padding-bottom: 16px;
+  border-bottom: 1px solid var(--border);
+}
+.forge-cart-summary dd {
+  font-family: ui-monospace, monospace;
+  white-space: nowrap;
+}
+.forge-cart-subtotal {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  font-size: 1.125rem;
+}
+.forge-cart-subtotal dd {
+  font-size: 1.375rem;
+  font-weight: 650;
+}
+.forge-cart-note {
+  font-size: 0.9375rem;
+  color: var(--muted-foreground);
+  line-height: 1.6;
+}
+.forge-cart-alert {
+  display: flex;
+  gap: 10px;
+  border: 1px solid #ff8f9140;
+  background: #ff8f9109;
+  padding: 12px;
+  border-radius: 6px;
+  color: var(--destructive);
+  font-size: 0.9375rem;
+  line-height: 1.6;
+}
+.forge-cart-alert > svg {
+  flex-shrink: 0;
+  margin-top: 2px;
+}
+.forge-cart-alert p {
+  margin-top: 6px;
+}
+.forge-cart-builder-link {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  font-size: 1rem;
+  border-top: 1px solid var(--border);
+  padding-top: 20px;
+}
+.forge-cart-builder-link > svg:first-child {
+  color: var(--forge-violet);
+  flex-shrink: 0;
+}
+.forge-cart-builder-link > svg:last-child {
+  margin-left: auto;
+  flex-shrink: 0;
+}
+.forge-cart-builder-link small {
+  display: block;
+  font-size: 0.875rem;
+  color: var(--muted-foreground);
+  margin-top: 5px;
+  line-height: 1.5;
+}
+.forge-cart-builder-link:hover {
+  color: var(--primary);
+}
+.forge-cart-state {
+  max-width: 680px;
+  margin: 36px auto;
+  padding: clamp(24px, 5vw, 56px);
+  text-align: center;
+  background:
+    radial-gradient(ellipse at 50% 0, #62f0dd0c, transparent 65%), var(--card);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+}
+.forge-cart-state-icon {
+  display: grid;
+  place-items: center;
+  width: 80px;
+  height: 80px;
+  border-radius: 20px;
+  border: 1px solid #62f0dd40;
+  background: #62f0dd0a;
+  color: var(--primary);
+  margin: 0 auto 28px;
+  transform: rotate(-6deg);
+}
+.forge-cart-state-icon svg {
+  transform: rotate(6deg);
+}
+.forge-cart-state h1 {
+  margin: 16px 0;
+}
+.forge-cart-state > p:not(.forge-eyebrow) {
+  max-width: 420px;
+  margin: 0 auto 28px;
+  color: var(--muted-foreground);
+  font-size: 1.125rem;
+  line-height: 1.7;
+  overflow-wrap: anywhere;
+}
+.forge-cart-state-actions {
+  display: flex;
+  justify-content: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+.forge-cart-mobile-bar {
+  display: none;
+}
+@media (max-width: 1023px) {
+  .forge-cart-layout {
+    grid-template-columns: minmax(0, 1fr) 310px;
+    gap: 20px;
+  }
+  .forge-cart-summary {
+    padding: 20px;
+  }
+  .forge-cart-image {
+    width: 100px;
+    height: 120px;
+  }
+  .forge-cart-item {
+    grid-template-columns: 100px minmax(0, 1fr);
+    gap: 12px;
+  }
+  .forge-cart-item-controls {
+    grid-column: 1/-1;
+  }
+  .forge-cart-image {
+    grid-row: auto;
+  }
+}
+@media (max-width: 767px) {
+  body:has(.forge-cart-mobile-bar) {
+    padding-bottom: calc(92px + env(safe-area-inset-bottom));
+  }
+  .forge-cart-page {
+    padding-block: 24px 40px;
+  }
+  .forge-cart-heading {
+    align-items: start;
+    flex-direction: column;
+    gap: 4px;
+    margin-bottom: 20px;
+  }
+  .forge-cart-layout {
+    grid-template-columns: 1fr;
+  }
+  .forge-cart-summary {
+    position: static;
+  }
+  .forge-cart-image {
+    width: 88px;
+    height: 104px;
+  }
+  .forge-cart-item {
+    grid-template-columns: 88px minmax(0, 1fr);
+    padding: 14px;
+  }
+  .forge-cart-item h2 {
+    font-size: 1.125rem;
+  }
+  .forge-cart-list-footer {
+    align-items: start;
+  }
+  .forge-cart-line-total {
+    font-size: 1.125rem;
+  }
+  .forge-cart-mobile-bar {
+    position: fixed;
+    z-index: 30;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 16px;
+    padding: 16px var(--forge-gutter) calc(16px + env(safe-area-inset-bottom));
+    border-top: 1px solid #62f0dd45;
+    background: #111722f5;
+  }
+  .forge-cart-mobile-bar > div {
+    min-width: 0;
+  }
+  .forge-cart-mobile-bar span {
+    display: block;
+    font-size: 0.875rem;
+    color: var(--muted-foreground);
+    margin-bottom: 5px;
+  }
+  .forge-cart-mobile-bar strong {
+    font:
+      600 1.25rem/1.2 ui-monospace,
+      monospace;
+    overflow-wrap: anywhere;
+  }
+  .forge-cart-mobile-action {
+    flex-shrink: 0;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .forge-cart-state-icon {
+    transform: none;
+  }
+  .forge-cart-state-icon svg {
+    transform: none;
+  }
+}

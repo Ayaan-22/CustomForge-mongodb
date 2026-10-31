@@ -1,0 +1,308 @@
+/* Shared menu and scroll tokens apply to portals as well as route content. */
+:root {
+  --forge-menu-surface: #111722;
+  --forge-menu-border: #36515e;
+  --forge-menu-text: #d6e0ee;
+  --forge-menu-highlight: #1b343b;
+  --forge-menu-shadow: 0 16px 44px #00000070, 0 0 0 1px #62f0dd08;
+  --forge-scroll-track: #0c121c;
+  --forge-scroll-thumb: #369e94;
+  --forge-scroll-hover: #62f0dd;
+}
+
+[data-slot="select-trigger"] {
+  min-width: 0;
+  min-height: 46px;
+  height: auto;
+  gap: 12px;
+  padding: 11px 12px;
+  border: 1px solid #35485b;
+  border-radius: 8px;
+  background: #0b111a;
+  color: #edf3fa;
+  font-size: 1.125rem;
+  line-height: 1.4;
+  text-align: left;
+  box-shadow: 0 1px 2px #00000020;
+  transition: border-color 160ms, background-color 160ms, box-shadow 160ms;
+}
+[data-slot="select-trigger"] [data-slot="select-value"] {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+[data-slot="select-trigger"] > svg {
+  color: #a3adbe;
+  opacity: 1;
+  transition: transform 160ms, color 160ms;
+}
+[data-slot="select-trigger"]:hover:not(:disabled) {
+  background: #131d29;
+  border-color: #4c687b;
+}
+[data-slot="select-trigger"]:focus-visible,
+[data-slot="select-trigger"][data-state="open"] {
+  border-color: var(--primary);
+  outline: none;
+  box-shadow: 0 0 0 3px #62f0dd20;
+}
+[data-slot="select-trigger"][data-state="open"] > svg {
+  transform: rotate(180deg);
+  color: var(--primary);
+}
+[data-slot="select-trigger"]:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+[data-slot="select-trigger"][aria-invalid="true"] {
+  border-color: var(--destructive);
+}
+
+/* Keep the same surface for selections, action menus and richer discovery panels. */
+:is(
+  [data-slot="select-content"],
+  [data-slot="dropdown-menu-content"],
+  [data-slot="dropdown-menu-sub-content"],
+  [data-slot="context-menu-content"],
+  [data-slot="context-menu-sub-content"],
+  [data-slot="menubar-content"],
+  [data-slot="menubar-sub-content"],
+  [data-slot="popover-content"],
+  [data-slot="navigation-menu-viewport"],
+  :where([data-slot="navigation-menu"][data-viewport="false"]) [data-slot="navigation-menu-content"],
+  .forge-search-panel
+) {
+  z-index: 80;
+  max-width: calc(100vw - 24px);
+  border-color: var(--forge-menu-border);
+  border-radius: 10px;
+  background: var(--forge-menu-surface);
+  color: var(--forge-menu-text);
+  box-shadow: var(--forge-menu-shadow);
+  backdrop-filter: none;
+  animation-duration: 140ms;
+}
+[data-slot="select-content"] {
+  width: var(--radix-select-trigger-width);
+  /* Compact mobile triggers still open a menu wide enough for whole words. */
+  min-width: min(220px, calc(100vw - 24px));
+  max-height: min(360px, var(--radix-select-content-available-height, 360px));
+  overflow: hidden;
+}
+[data-slot="select-viewport"] {
+  width: 100%;
+  min-width: 0;
+  height: auto;
+  padding: 6px;
+  overscroll-behavior: contain;
+}
+:is([data-slot="dropdown-menu-content"], [data-slot="dropdown-menu-sub-content"]) {
+  min-width: min(220px, calc(100vw - 24px));
+  max-height: min(480px, var(--radix-dropdown-menu-content-available-height, calc(100dvh - 24px)));
+  padding: 6px;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
+:is([data-slot="context-menu-content"], [data-slot="context-menu-sub-content"]) {
+  min-width: min(220px, calc(100vw - 24px));
+  max-height: min(480px, var(--radix-context-menu-content-available-height, calc(100dvh - 24px)));
+  padding: 6px;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
+:is([data-slot="menubar-content"], [data-slot="menubar-sub-content"]) {
+  min-width: min(220px, calc(100vw - 24px));
+  max-height: min(480px, var(--radix-menubar-content-available-height, calc(100dvh - 24px)));
+  padding: 6px;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
+[data-slot="popover-content"] {
+  max-height: var(--radix-popover-content-available-height, calc(100dvh - 24px));
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
+/* The category panel keeps its richer layout and bounded navigation height. */
+.forge-mega-panel[data-slot="popover-content"] {
+  max-height: min(740px, var(--radix-popover-content-available-height));
+}
+:where([data-slot="navigation-menu"][data-viewport="false"]) [data-slot="navigation-menu-content"] {
+  max-height: calc(100dvh - 24px);
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
+
+:is(
+  [data-slot="select-item"],
+  [data-slot="dropdown-menu-item"],
+  [data-slot="dropdown-menu-checkbox-item"],
+  [data-slot="dropdown-menu-radio-item"],
+  [data-slot="dropdown-menu-sub-trigger"],
+  [data-slot="context-menu-item"],
+  [data-slot="context-menu-checkbox-item"],
+  [data-slot="context-menu-radio-item"],
+  [data-slot="context-menu-sub-trigger"],
+  [data-slot="menubar-item"],
+  [data-slot="menubar-checkbox-item"],
+  [data-slot="menubar-radio-item"],
+  [data-slot="menubar-sub-trigger"],
+  [data-slot="command-item"],
+  [data-slot="navigation-menu-link"]
+) {
+  min-height: 44px;
+  gap: 10px;
+  padding: 10px 12px;
+  border: 1px solid transparent;
+  border-radius: 6px;
+  color: var(--forge-menu-text);
+  font-size: 1.125rem;
+  line-height: 1.45;
+  cursor: pointer;
+  overflow-wrap: anywhere;
+  outline: none;
+  transition: background-color 140ms, border-color 140ms, color 140ms;
+}
+[data-slot="select-item"] { padding-right: 36px; }
+:is(
+  [data-slot="dropdown-menu-checkbox-item"], [data-slot="dropdown-menu-radio-item"],
+  [data-slot="context-menu-checkbox-item"], [data-slot="context-menu-radio-item"],
+  [data-slot="menubar-checkbox-item"], [data-slot="menubar-radio-item"]
+) { padding-left: 36px; }
+:is(
+  [data-slot="dropdown-menu-item"], [data-slot="context-menu-item"], [data-slot="menubar-item"],
+  [data-slot="dropdown-menu-sub-trigger"], [data-slot="context-menu-sub-trigger"], [data-slot="menubar-sub-trigger"]
+)[data-inset="true"] {
+  padding-left: 36px;
+}
+:is([data-slot="select-item"], [data-slot="dropdown-menu-radio-item"], [data-slot="dropdown-menu-checkbox-item"], [data-slot="context-menu-radio-item"], [data-slot="context-menu-checkbox-item"], [data-slot="menubar-radio-item"], [data-slot="menubar-checkbox-item"])[data-state="checked"] {
+  color: var(--primary);
+  background: #62f0dd0b;
+}
+:is([data-slot="select-item"], [data-slot^="dropdown-menu-"], [data-slot^="context-menu-"], [data-slot^="menubar-"])[data-highlighted],
+[data-slot="command-item"][data-selected="true"],
+.forge-search-choice:hover,
+.forge-search-choice.is-selected,
+.forge-mega-category:hover,
+.forge-mega-category:focus-visible,
+[data-slot="navigation-menu-link"]:hover,
+[data-slot="navigation-menu-link"]:focus-visible {
+  color: #f2fffc;
+  background: var(--forge-menu-highlight);
+  border-color: #62f0dd40;
+  outline: none;
+}
+:is([data-slot="select-item"], [data-slot^="dropdown-menu-"], [data-slot^="context-menu-"], [data-slot^="menubar-"]) svg {
+  color: var(--primary);
+}
+:is([data-slot^="dropdown-menu-"], [data-slot^="context-menu-"], [data-slot^="menubar-"])[data-variant="destructive"] {
+  color: var(--destructive);
+}
+:is([data-slot^="dropdown-menu-"], [data-slot^="context-menu-"], [data-slot^="menubar-"])[data-variant="destructive"][data-highlighted] {
+  background: #ff8f9114;
+  border-color: #ff8f9140;
+}
+:is([data-slot="select-item"], [data-slot^="dropdown-menu-"], [data-slot^="context-menu-"], [data-slot^="menubar-"])[data-disabled],
+[data-slot="command-item"][data-disabled="true"] {
+  opacity: 0.4;
+  cursor: not-allowed;
+  pointer-events: none;
+}
+:is([data-slot="select-label"], [data-slot="dropdown-menu-label"], [data-slot="context-menu-label"], [data-slot="menubar-label"]) {
+  padding: 10px 12px 8px;
+  color: #a9becb;
+  font-size: 0.875rem;
+  font-weight: 600;
+  line-height: 1.5;
+  letter-spacing: .05em;
+  text-transform: uppercase;
+}
+:is([data-slot="dropdown-menu-label"], [data-slot="context-menu-label"], [data-slot="menubar-label"])[data-inset="true"] {
+  padding-left: 36px;
+}
+:is([data-slot="select-separator"], [data-slot="dropdown-menu-separator"], [data-slot="context-menu-separator"], [data-slot="menubar-separator"], [data-slot="command-separator"]) {
+  height: 1px;
+  margin: 6px 2px;
+  background: #2c3e4b;
+}
+:is([data-slot="select-scroll-up-button"], [data-slot="select-scroll-down-button"]) {
+  min-height: 28px;
+  color: var(--primary);
+  background: var(--forge-menu-surface);
+  cursor: pointer;
+}
+.forge-search-panel { border-top-width: 1px; }
+.forge-search-choice { border-radius: 6px; }
+
+/* Firefox uses standard scrollbars; WebKit/Blink get rounded gradient thumbs. */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: var(--forge-scroll-thumb) var(--forge-scroll-track);
+}
+@supports selector(::-webkit-scrollbar) {
+  * {
+    scrollbar-width: auto;
+    scrollbar-color: auto;
+  }
+  *::-webkit-scrollbar { width: 12px; height: 12px; }
+  *::-webkit-scrollbar-track { background: var(--forge-scroll-track); }
+  *::-webkit-scrollbar-thumb {
+    min-height: 40px;
+    min-width: 40px;
+    border: 3px solid var(--forge-scroll-track);
+    border-radius: 12px;
+    background: linear-gradient(180deg, #328f88, #52c6b8);
+  }
+  *::-webkit-scrollbar-thumb:hover { background: var(--forge-scroll-hover); }
+  *::-webkit-scrollbar-thumb:active { background: #a0fff0; }
+  *::-webkit-scrollbar-corner { background: var(--forge-scroll-track); }
+  *::-webkit-scrollbar-button { display: none; width: 0; height: 0; }
+}
+[data-slot="scroll-area-scrollbar"] {
+  padding: 2px;
+  background: var(--forge-scroll-track);
+}
+[data-slot="scroll-area-thumb"] {
+  border-radius: 12px;
+  background: linear-gradient(180deg, #328f88, #52c6b8);
+}
+[data-slot="scroll-area-scrollbar"][data-orientation="vertical"] [data-slot="scroll-area-thumb"] {
+  min-height: 30px;
+}
+[data-slot="scroll-area-scrollbar"][data-orientation="horizontal"] [data-slot="scroll-area-thumb"] {
+  min-width: 30px;
+  background: linear-gradient(90deg, #328f88, #52c6b8);
+}
+[data-slot="scroll-area-scrollbar"]:hover [data-slot="scroll-area-thumb"] {
+  background: var(--forge-scroll-hover);
+}
+
+@media (max-width: 639px) {
+  [data-slot="select-trigger"],
+  [data-slot="select-item"],
+  [data-slot="dropdown-menu-item"],
+  [data-slot="dropdown-menu-checkbox-item"],
+  [data-slot="dropdown-menu-radio-item"] { font-size: 1.125rem; }
+}
+@media (prefers-reduced-motion: reduce) {
+  [data-slot="select-trigger"],
+  [data-slot="select-trigger"] > svg,
+  [data-slot="select-item"],
+  [data-slot^="dropdown-menu-"],
+  [data-slot^="context-menu-"],
+  [data-slot^="menubar-"],
+  [data-slot="popover-content"],
+  [data-slot="navigation-menu-viewport"],
+  [data-slot="navigation-menu-content"],
+  [data-slot="command-item"],
+  .forge-search-panel {
+    animation: none !important;
+    transition: none !important;
+  }
+}
+@media (forced-colors: active) {
+  * { scrollbar-width: auto; scrollbar-color: auto; }
+  *::-webkit-scrollbar-thumb { background: ButtonText; border-color: Canvas; }
+  *::-webkit-scrollbar-track, *::-webkit-scrollbar-corner { background: Canvas; }
+  [data-slot="scroll-area-thumb"] { background: ButtonText; }
+}

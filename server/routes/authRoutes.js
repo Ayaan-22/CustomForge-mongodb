@@ -1,4 +1,7 @@
 // server/routes/authRoutes.js
+// Mount: /api/v1/auth
+// PUBLIC: register, login, logout, verify-email, forgot/reset password, refresh, csrf-token.
+// After router.use(protect): update-password, 2FA — logged-in + verified email.
 
 import express from "express";
 import {
@@ -12,6 +15,10 @@ import {
   enableTwoFactor,
   verifyTwoFactor,
   disableTwoFactor,
+  refreshToken,
+  sendVerificationEmail,
+  resendVerification,
+  csrfToken,
 } from "../controllers/authController.js";
 
 import { loginLimiter } from "../controllers/authController.js";
@@ -21,25 +28,44 @@ import {
   verifiedEmail,
   twoFactorAuth,
 } from "../middleware/authMiddleware.js";
+import { validate } from "../middleware/validate.js";
+import {
+  registerSchema,
+  loginSchema,
+  forgotPasswordSchema,
+  resetPasswordSchema,
+  resendVerificationSchema,
+} from "../validation/authSchemas.js";
+import { verificationAccountLimiter, userActionLimiter } from '../config/rateLimit.js';
 
 const router = express.Router();
 
 /* ============================
    PUBLIC AUTH ROUTES
    ============================ */
-router.post("/register", signup);
-router.post("/login", loginLimiter, login);
-router.get("/logout", logout);
+router.post("/register", validate(registerSchema), signup);
+router.post("/login", validate(loginSchema), loginLimiter, login);
+router.post('/resend-verification', validate(resendVerificationSchema), verificationAccountLimiter, resendVerification);
+router.post("/logout", logout);
 
-router.get("/verify-email/:token", verifyEmail);
+router.post("/verify-email/:token", verifyEmail);
+/* protect only — unverified users must be able to resend. Placed before router.use(verifiedEmail). */
+router.post("/send-verification-email", protect, sendVerificationEmail);
 
-router.post("/forgot-password", forgotPassword);
-router.patch("/reset-password/:token", resetPassword);
+router.post("/forgot-password", validate(forgotPasswordSchema), forgotPassword);
+router.post("/reset-password/:token", validate(resetPasswordSchema), resetPassword);
+
+/* ============================
+   TOKEN REFRESH
+   ============================ */
+router.post("/refresh", refreshToken);
+router.get("/csrf-token", csrfToken);
 
 /* ============================
    PROTECTED ROUTES – Must be logged in + verified email
    ============================ */
 router.use(protect);
+router.use(userActionLimiter);
 router.use(verifiedEmail);
 
 /* ============================
@@ -51,7 +77,7 @@ router.patch("/update-password", twoFactorAuth, updatePassword);
    2FA SETUP FLOW
    ============================ */
 
-// STEP 1 - Generate secret (NO 2FA required)
+// STEP 1 - Generate initial secret; controller rejects re-enrollment while 2FA is enabled.
 router.post("/2fa/enable", enableTwoFactor);
 
 // STEP 2 - Verify secret (NO 2FA required – this is onboarding)

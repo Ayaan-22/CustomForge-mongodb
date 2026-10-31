@@ -1,0 +1,59 @@
+include mixins
+block settings
+
+doctype html
+html(lang="en" xmlns="http://www.w3.org/1999/xhtml")
+  head
+    meta(charset="utf-8")
+    meta(name="viewport" content="width=device-width, initial-scale=1")
+    meta(name="color-scheme" content="dark")
+    meta(name="supported-color-schemes" content="dark")
+    title= subject
+    style.
+      body, table, td, a { -webkit-text-size-adjust:100%; -ms-text-size-adjust:100%; }
+      table { border-collapse:collapse; mso-table-lspace:0pt; mso-table-rspace:0pt; }
+      a:focus-visible { outline:3px solid #67e8f9; outline-offset:4px; }
+      a[x-apple-data-detectors] { color:inherit !important; text-decoration:none !important; }
+      @media only screen and (max-width:620px) {
+        .outer { padding:16px 8px !important; }
+        .pad { padding-left:22px !important; padding-right:22px !important; }
+        .headline { font-size:28px !important; line-height:34px !important; }
+        .action-table { width:100% !important; }
+      }
+  body(style="margin:0;padding:0;width:100%;background-color:#090b14;color:#e2e8f0;font-family:Arial,Helvetica,sans-serif;")
+    div.preheader(style="display:none;font-size:1px;line-height:1px;color:#090b14;max-height:0;max-width:0;opacity:0;overflow:hidden;mso-hide:all;")= preheader
+    table(role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" bgcolor="#090b14")
+      tr
+        td.outer(align="center" style="padding:40px 16px;")
+          // Outlook uses a fixed-width wrapper; other clients get a fluid card.
+          <!--[if mso]><table role="presentation" width="600" align="center"><tr><td><![endif]-->
+          table(role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" bgcolor="#121626" style="max-width:600px;border:1px solid #30364d;")
+            tr
+              td.accent-bar(height="4" bgcolor="#a78bfa" style="height:4px;line-height:4px;font-size:0;") &nbsp;
+            tr
+              td.pad(style="padding:28px 36px;border-bottom:1px solid #30364d;")
+                table(role="presentation" width="100%" cellpadding="0" cellspacing="0")
+                  tr
+                    td(style="font-family:Arial,Helvetica,sans-serif;font-size:23px;font-weight:800;letter-spacing:-0.8px;color:#ffffff;")
+                      p(style="margin:0;")
+                        | CUSTOM
+                        span(style="color:#b8a1ff;") FORGE
+                    td(align="right" style="font-family:'Courier New',monospace;font-size:11px;letter-spacing:2px;color:#93a4bd;")
+                      p(style="margin:0;") GEAR UP.
+            tr
+              td.pad(style="padding:34px 36px 12px;")
+                p(style="margin:0 0 16px;font-family:'Courier New',monospace;font-size:12px;line-height:18px;font-weight:bold;letter-spacing:2px;color:#b8a1ff;")= eyebrow
+                h1.headline(style="margin:0 0 20px;font-size:34px;line-height:40px;letter-spacing:-0.8px;color:#f8fafc;font-weight:800;")= heading
+                block content
+            tr
+              td.pad(style="padding:8px 36px 32px;")
+                +action(actionLabel, url)
+                p(style="margin:20px 0 0;color:#a9b7cd;font-size:12px;line-height:19px;") Button not opening? Copy this link into your browser:
+                p(style="margin:6px 0 0;font-size:12px;line-height:19px;word-break:break-all;overflow-wrap:anywhere;")
+                  a(href=url style="color:#c4b5fd;text-decoration:underline;word-break:break-all;")= url
+            tr
+              td.pad(bgcolor="#0e1220" style="padding:24px 36px;border-top:1px solid #30364d;")
+                p(style="margin:0 0 8px;color:#e2e8f0;font-size:13px;line-height:20px;font-weight:bold;") CustomForge / Built for your next level.
+                p(style="margin:0;color:#a9b7cd;font-size:12px;line-height:19px;") This is a service email about your CustomForge account or order. Keep account links private. We will never ask for your password by email.
+                p(style="margin:12px 0 0;color:#a9b7cd;font-size:11px;line-height:18px;") © #{year} CustomForge
+          <!--[if mso]></td></tr></table><![endif]-->

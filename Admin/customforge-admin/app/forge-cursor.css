@@ -1,0 +1,21 @@
+/* Native cursors stay exact and responsive without a mouse-tracking render loop.
+   Text selection, resizing, touch and forced-colors keep their platform cues. */
+@media (hover: hover) and (pointer: fine) and (forced-colors: none) {
+  html,
+  body,
+  body .cursor-default {
+    cursor: url("/forge-cursor.svg") 4 3, default;
+  }
+
+  html body :is(a[href], button, summary, select, label[for], [role="button"], [role="link"], [role="tab"], [role="menuitem"], [role="option"], [role="checkbox"], [role="switch"], input[type="checkbox"], input[type="radio"], input[type="range"], input[type="submit"], input[type="button"], input[type="file"]) {
+    cursor: url("/forge-cursor-target.svg") 16 16, pointer;
+  }
+
+  html body :is(input:not([type]), input[type="text"], input[type="email"], input[type="password"], input[type="search"], input[type="tel"], input[type="url"], input[type="number"], textarea, [contenteditable="true"]) {
+    cursor: text;
+  }
+
+  html body :is(:disabled, [aria-disabled="true"], [data-disabled="true"]) {
+    cursor: not-allowed;
+  }
+}

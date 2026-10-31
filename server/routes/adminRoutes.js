@@ -1,144 +1,32 @@
-// File: server/routes/adminRoutes.js
-
-import express from 'express';
-import {
-  // Analytics & Dashboard
-  getSalesAnalytics,
-  getProductStats,
-  getDashboardOverview,
-  getInventoryAnalytics,
-
-  // User Management
-  createUser,
-  getAllUsers,
-  getUserById,
-  deleteUser,
-  updateUser,
-
-  // Product Management
-  getAllProducts,
-  createProduct,
-  updateProduct,
-  deleteProduct,
-  getProductReviews,
-  deleteProductReview,
-
-  // Order Management
-  getOrders,
-  updateOrderToDelivered,
-  processRefund,
-  processReturn,
-  markOrderAsPaid,
-  updateOrderStatus,
-
-  // Coupon Management
-  createCoupon,
-  getCoupons,
-  getCoupon,
-  updateCoupon,
-  deleteCoupon
-} from "../controllers/adminController.js";
-
-import {
-  protect,
-  verifiedEmail,
-  twoFactorAuth,
-  restrictTo
-} from "../middleware/authMiddleware.js";
-
-import {
-  getAllLogs,
-  getLogById,
-  getAvailableLogDates,
-  getLogStats
-} from "../controllers/logController.js";
-
-// Rate limiters (centralized config)
-import { adminLimiter, logRateLimiter } from "../config/rateLimit.js";
-
-import upload from "../middleware/upload.js";
-
-const router = express.Router();
-
-/* ============================================================================
-   SECURITY & ACCESS CONTROL
-   ========================================================================== */
-router.use(protect);
-router.use(verifiedEmail);
-// router.use(twoFactorAuth);
-router.use(restrictTo("admin"));
-
-// Apply global admin-level rate limiting
-router.use(adminLimiter);
-
-/* ============================================================================
-   ANALYTICS & DASHBOARD ROUTES
-   ========================================================================== */
-router.get("/analytics/overview", getDashboardOverview);
-router.get("/analytics/sales", getSalesAnalytics);
-router.get("/analytics/products", getProductStats);
-router.get("/analytics/inventory", getInventoryAnalytics);
-
-/* ============================================================================
-   USER MANAGEMENT ROUTES
-   ========================================================================== */
-router.post("/users", createUser);
-router.get("/users", getAllUsers);
-
-router
-  .route("/users/:id")
-  .get(getUserById)
-  .patch(updateUser)
-  .delete(deleteUser);
-
-/* ============================================================================
-   PRODUCT MANAGEMENT ROUTES
-   ========================================================================== */
-router.get("/products", getAllProducts);
-router.post("/products", upload.array("images", 10), createProduct);
-
-router
-  .route("/products/:id")
-  .patch(upload.array("images", 10), updateProduct)
-  .delete(deleteProduct);
-
-router
-  .route("/products/:id/reviews")
-  .get(getProductReviews)
-  .delete(deleteProductReview);
-
-/* ============================================================================
-   ORDER MANAGEMENT ROUTES
-   ========================================================================== */
-router.get("/orders", getOrders);
-router.put("/orders/:id/deliver", updateOrderToDelivered);
-router.put("/orders/:id/mark-paid", markOrderAsPaid);
-router.put("/orders/:id/status", updateOrderStatus);
-router.post("/orders/:id/refund", processRefund);
-router.put("/orders/:id/process-return", processReturn);
-
-/* ============================================================================
-   COUPON MANAGEMENT ROUTES
-   ========================================================================== */
-router
-  .route("/coupons")
-  .post(createCoupon)
-  .get(getCoupons);
-
-router
-  .route("/coupons/:id")
-  .get(getCoupon)
-  .patch(updateCoupon)
-  .delete(deleteCoupon);
-
-/* ============================================================================
-   SYSTEM & LOG MANAGEMENT ROUTES (with logRateLimiter)
-   ========================================================================== */
-router.use("/logs", logRateLimiter); // Apply ONLY to /logs routes
-
-router.get("/logs", getAllLogs);
-router.get("/logs/:id", getLogById);
-router.get("/logs/dates/available", getAvailableLogDates);
-router.get("/logs/stats", getLogStats);
-
+import {Router} from 'express';
+import * as admin from '../controllers/adminController.js';
+import * as analytics from '../controllers/analyticsController.js';
+import * as logs from '../controllers/logController.js';
+import {protect,verifiedEmail,restrictTo,twoFactorAuth} from '../middleware/authMiddleware.js';
+import {adminLimiter,logRateLimiter} from '../config/rateLimit.js';
+import upload from '../middleware/upload.js';
+const router=Router();
+router.use(protect,verifiedEmail,restrictTo('admin'),adminLimiter);
+router.get('/analytics/overview',analytics.getDashboardOverview);
+router.get('/analytics/products',analytics.getProductStats);
+router.get('/analytics/users',analytics.getUserAnalytics);
+router.get('/analytics/orders',analytics.getOrderAnalytics);
+router.get('/analytics/sales',analytics.getSalesAnalytics);
+router.get('/analytics/inventory',analytics.getInventoryAnalytics);
+router.get('/users',admin.getAllUsers);router.post('/users',twoFactorAuth,admin.createUser);
+router.get('/users/:id',admin.getUserById);router.patch('/users/:id',twoFactorAuth,admin.updateUser);router.delete('/users/:id',twoFactorAuth,admin.deleteUser);
+router.get('/products',admin.getAllProducts);router.post('/products',upload.array('images',10),admin.createProduct);
+router.get('/products/:id',admin.getProduct);router.patch('/products/:id',upload.array('images',10),admin.updateProduct);router.delete('/products/:id',admin.deleteProduct);
+router.get('/orders',admin.getOrders);router.get('/orders/:id',admin.getOrder);
+router.patch('/orders/:id/update-status',admin.updateOrderStatus);
+router.patch('/orders/:id/mark-paid',twoFactorAuth,admin.markOrderAsPaid);
+router.patch('/orders/:id/mark-delivered',admin.updateOrderToDelivered);
+router.patch('/orders/:id/refund',twoFactorAuth,admin.processRefund);
+router.patch('/orders/:id/approve-return',(req,res,next)=>{req.body={returnStatus:'approved'};next();},admin.processReturn);
+router.put('/orders/:id/process-return',admin.processReturn);
+router.get('/coupons',admin.getCoupons);router.post('/coupons',admin.createCoupon);
+router.get('/coupons/:id',admin.getCoupon);router.patch('/coupons/:id',admin.updateCoupon);router.delete('/coupons/:id',admin.deleteCoupon);router.patch('/coupons/:id/toggle',admin.toggleCoupon);
+router.get('/reviews',admin.getReviews);router.patch('/reviews/:id/moderate',admin.moderateReview);router.delete('/reviews/:id',admin.deleteReview);
+router.use('/logs',logRateLimiter);
+router.get('/logs',logs.getAllLogs);router.get('/logs/stats',logs.getLogStats);router.get('/logs/dates/available',logs.getAvailableLogDates);router.get('/logs/:id',logs.getLogById);
 export default router;

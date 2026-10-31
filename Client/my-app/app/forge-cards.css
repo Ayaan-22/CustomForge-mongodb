@@ -1,0 +1,347 @@
+/* Decision-oriented shopping cards. Import after the shared Forge styles. */
+.forge-decision-card {
+  border-color: #303c4e;
+  background: linear-gradient(145deg, #151e2b, #101722 72%);
+  border-radius: 12px;
+}
+
+.forge-decision-card:focus-within {
+  border-color: #62f0dd85;
+}
+
+.forge-decision-card .forge-product-image {
+  height: 225px;
+  isolation: isolate;
+  background:
+    radial-gradient(ellipse at 20% 5%, #62f0dd15, transparent 60%),
+    radial-gradient(ellipse at 100% 70%, #a696ff17, transparent 65%),
+    linear-gradient(135deg, #182333, #101823);
+  border-bottom: 1px solid #2c394c;
+}
+
+.forge-decision-card .forge-product-image::after {
+  content: "";
+  position: absolute;
+  inset: 12px;
+  border-top: 1px solid #c2d6f018;
+  border-bottom: 1px solid #c2d6f010;
+  pointer-events: none;
+}
+
+.forge-decision-card .forge-product-image .forge-card-photo {
+  object-fit: contain;
+  padding: 32px 20px 53px;
+  opacity: 1;
+  transition: opacity 220ms ease;
+}
+
+.forge-decision-card:hover .forge-product-image img,
+.forge-decision-card .forge-product-image img {
+  transform: none;
+}
+
+.forge-decision-card .forge-product-image .forge-image-secondary,
+.forge-decision-card:hover .forge-product-image .forge-image-secondary {
+  opacity: 0;
+}
+
+.forge-decision-card .forge-product-image .forge-card-photo.is-obscured {
+  opacity: 0;
+}
+
+.forge-decision-card .forge-product-image .forge-image-secondary.is-visible {
+  opacity: 1;
+}
+
+.forge-decision-card .forge-quick-view,
+.forge-decision-card:hover .forge-quick-view,
+.forge-decision-card .forge-quick-view:focus-visible {
+  left: 14px;
+  bottom: 12px;
+  min-height: 44px;
+  padding: 9px 13px;
+  opacity: 1;
+  transform: none;
+  z-index: 2;
+  color: #e9f0fb;
+  font-size: 0.875rem;
+  border-color: #667b9865;
+  background: #111c2ced;
+  transition:
+    background 180ms ease,
+    border-color 180ms ease;
+}
+
+.forge-decision-card .forge-quick-view:hover {
+  border-color: #62f0dd85;
+  background: #142b30;
+}
+
+.forge-card-media-note {
+  position: absolute;
+  bottom: 26px;
+  right: 14px;
+  z-index: 2;
+  padding: 3px 6px;
+  color: #d3caff;
+  background: #1e1838ed;
+  border: 1px solid #a696ff40;
+  border-radius: 3px;
+  font:
+    0.875rem/1.4 var(--font-geist-mono),
+    monospace;
+}
+
+.forge-decision-card .forge-card-wishlist {
+  z-index: 2;
+  border: 1px solid #3a4862;
+  background: #101927;
+  backdrop-filter: none;
+}
+
+.forge-decision-card .forge-product-badge {
+  top: 14px;
+  left: 14px;
+  font-size: 0.875rem;
+}
+
+.forge-decision-card .forge-card-meta {
+  color: #aabbd0;
+  flex-wrap: wrap;
+  font-size: 0.875rem;
+  letter-spacing: 0.4px;
+}
+
+.forge-decision-card .forge-card-title {
+  font-size: 1.125rem;
+  min-height: 3em;
+  letter-spacing: -0.15px;
+}
+
+.forge-card-highlights {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(82px, 1fr));
+  gap: 10px;
+  margin-top: 13px;
+  padding-block: 12px;
+  border-block: 1px solid #334157;
+}
+
+.forge-card-highlights > div {
+  min-width: 0;
+}
+
+.forge-card-highlights dt {
+  font:
+    0.875rem/1.4 var(--font-geist-mono),
+    monospace;
+  color: #a3b5ca;
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
+  margin-bottom: 5px;
+}
+
+.forge-card-highlights dd {
+  font-size: 0.875rem;
+  line-height: 1.5;
+  font-weight: 550;
+  color: #e4eefc;
+  overflow-wrap: anywhere;
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  overflow: hidden;
+}
+
+.forge-decision-card .forge-card-rating {
+  font-size: 0.875rem;
+}
+
+.forge-decision-card .forge-card-pricing {
+  align-items: baseline;
+  flex-wrap: wrap;
+  gap: 4px 10px;
+  margin-top: 16px;
+}
+
+.forge-decision-card .forge-card-pricing strong {
+  font-size: 1.5rem;
+}
+
+.forge-decision-card .forge-card-stock {
+  font-size: 0.875rem;
+  gap: 7px;
+}
+
+.forge-decision-card .forge-card-stock i {
+  width: 5px;
+  height: 5px;
+}
+
+.forge-decision-card .forge-card-actions > .forge-add {
+  min-height: 44px;
+  color: #0a1b18;
+  background: #62f0dd;
+  border-color: #62f0dd;
+  font-size: 0.9375rem;
+}
+
+.forge-decision-card .forge-card-actions > .forge-add:hover:not(:disabled) {
+  background: #a0f9ed;
+  border-color: #a0f9ed;
+}
+
+.forge-list-grid .forge-decision-card .forge-product-image {
+  height: 100%;
+  min-height: 240px;
+}
+
+.forge-list-grid .forge-decision-card .forge-card-title {
+  min-height: auto;
+}
+
+.forge-list-grid .forge-card-highlights {
+  max-width: 480px;
+}
+
+@media (max-width: 767px) {
+  .forge-list-grid .forge-decision-card {
+    grid-template-columns: 112px minmax(0, 1fr);
+  }
+
+  .forge-list-grid .forge-decision-card .forge-product-image {
+    min-height: 245px;
+  }
+
+  .forge-list-grid .forge-decision-card .forge-product-image .forge-card-photo {
+    padding: 44px 7px 57px;
+  }
+
+  .forge-list-grid .forge-decision-card .forge-quick-view {
+    left: 5px;
+    right: 5px;
+    bottom: 10px;
+    justify-content: center;
+    padding-inline: 4px;
+    font-size: 0.875rem;
+  }
+
+  .forge-list-grid .forge-card-media-note {
+    bottom: 62px;
+    right: 8px;
+    left: 8px;
+    text-align: center;
+    font-size: 0.875rem;
+  }
+
+  .forge-list-grid .forge-decision-card .forge-product-badge {
+    top: 12px;
+    left: 7px;
+    max-width: 57px;
+    padding-inline: 4px;
+    font-size: 0.875rem;
+  }
+
+  .forge-list-grid .forge-decision-card .forge-card-wishlist {
+    left: 64px;
+    right: auto;
+    top: 8px;
+  }
+
+  .forge-list-grid .forge-decision-card .forge-card-meta {
+    font-size: 0.875rem;
+  }
+
+  .forge-list-grid .forge-decision-card .forge-card-title {
+    font-size: 1.125rem;
+  }
+
+  .forge-list-grid .forge-card-highlights {
+    grid-template-columns: 1fr;
+    gap: 6px;
+    padding-block: 10px;
+  }
+
+  .forge-list-grid .forge-card-highlights > div {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 8px;
+  }
+
+  .forge-list-grid .forge-card-highlights dt {
+    margin: 0;
+    flex-shrink: 0;
+    font-size: 0.875rem;
+  }
+
+  .forge-list-grid .forge-card-highlights dd {
+    font-size: 0.875rem;
+    text-align: right;
+  }
+
+  .forge-list-grid .forge-decision-card .forge-card-pricing strong {
+    font-size: 1.375rem;
+  }
+
+  .forge-list-grid .forge-decision-card .forge-card-actions > .forge-add {
+    font-size: 1rem;
+    padding-inline: 7px;
+  }
+}
+
+/* A narrow row cannot fit full-size product copy and controls on small phones. */
+@media (max-width: 420px) {
+  .forge-list-grid .forge-decision-card {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .forge-list-grid .forge-decision-card .forge-product-image {
+    grid-row: auto;
+    min-height: 220px;
+    height: 220px;
+  }
+  .forge-list-grid .forge-decision-card .forge-product-image .forge-card-photo {
+    padding: 32px 20px 53px;
+  }
+  .forge-list-grid .forge-decision-card .forge-quick-view {
+    left: 14px;
+    right: auto;
+    bottom: 12px;
+    padding-inline: 12px;
+  }
+  .forge-list-grid .forge-card-media-note {
+    left: auto;
+    right: 14px;
+    bottom: 26px;
+    text-align: right;
+  }
+  .forge-list-grid .forge-decision-card .forge-product-badge {
+    left: 14px;
+    max-width: none;
+  }
+  .forge-list-grid .forge-decision-card .forge-card-wishlist {
+    left: auto;
+    right: 14px;
+  }
+  .forge-list-grid .forge-card-actions {
+    grid-column: 1;
+    padding: 0 14px 16px;
+  }
+}
+@media (hover: none) {
+  .forge-decision-card:hover {
+    transform: none;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .forge-decision-card,
+  .forge-decision-card .forge-card-photo,
+  .forge-decision-card .forge-quick-view {
+    transition: none;
+  }
+
+  .forge-decision-card:hover {
+    transform: none;
+  }
+}

@@ -170,7 +170,7 @@ const couponSchema = new mongoose.Schema(
 );
 
 // Indexes for performance
-couponSchema.index({ code: 1 }, { unique: true });
+
 couponSchema.index({ isActive: 1, validFrom: 1, validTo: 1 });
 couponSchema.index({ validTo: 1 });
 couponSchema.index({ timesUsed: 1, usageLimit: 1 });

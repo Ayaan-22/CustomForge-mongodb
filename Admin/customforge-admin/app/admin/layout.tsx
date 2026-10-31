@@ -3,8 +3,9 @@
 import type React from "react"
 
 import { useState } from "react"
-import Sidebar from "@/components/Sidebar"
-import Header from "@/components/Header"
+import { Sidebar } from "./components/sidebar"
+import { Topbar } from "./components/topbar"
+import { ApiProvider } from "./components/api-provider"
 
 export default function AdminLayout({
   children,
@@ -12,14 +13,25 @@ export default function AdminLayout({
   children: React.ReactNode
 }) {
   const [sidebarOpen, setSidebarOpen] = useState(false)
+  const [collapsed, setCollapsed] = useState(false)
 
   return (
-    <div className="flex h-screen bg-gray-100 dark:bg-gray-900">
-      <Sidebar sidebarOpen={sidebarOpen} setSidebarOpen={setSidebarOpen} />
-      <div className="flex-1 flex flex-col overflow-hidden">
-        <Header setSidebarOpen={setSidebarOpen} />
-        <main className="flex-1 overflow-x-hidden overflow-y-auto bg-gray-100 dark:bg-gray-900 p-6">{children}</main>
+    <ApiProvider>
+      <div className="fa-workspace">
+        {/* Sidebar */}
+        <Sidebar open={sidebarOpen} onToggle={() => setSidebarOpen(!sidebarOpen)} collapsed={collapsed} onCollapse={() => setCollapsed(!collapsed)} />
+
+        {/* Main Content */}
+        <div className="fa-workspace-main">
+          {/* Topbar */}
+          <Topbar onMenuClick={() => setSidebarOpen(!sidebarOpen)} />
+
+          {/* Page Content */}
+          <main id="admin-main-content" className="fa-main-content" tabIndex={-1}>
+            <div className="fa-content-wrap">{children}</div>
+          </main>
+        </div>
       </div>
-    </div>
+    </ApiProvider>
   )
 }

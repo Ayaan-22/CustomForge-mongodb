@@ -1,35 +1,11 @@
-// File: server/routes/paymentRoutes.js
-import express from "express";
-import {
-  processPayment,
-  createPaymentIntent,
-  getPaymentMethods,
-  savePaymentMethod
-} from "../controllers/paymentController.js";
-import { protect } from "../middleware/authMiddleware.js";
-
-const router = express.Router();
-
-// All payment routes require authentication
-router.use(protect);
-
-/**
- * PROCESS PAYMENT (STRIPE / PAYPAL / COD)
- */
-router.route("/process")
-  .post(processPayment);
-
-/**
- * STRIPE CLIENT-SECRET FLOW
- */
-router.route("/create-intent")
-  .post(createPaymentIntent);
-
-/**
- * USER PAYMENT METHODS (STRIPE STORED CARDS)
- */
-router.route("/payment-methods")
-  .get(getPaymentMethods)
-  .post(savePaymentMethod);
-
+import {Router} from 'express';
+import {protect,verifiedEmail} from '../middleware/authMiddleware.js';
+import {createStripeSession,getPaymentMethods,unavailable,paymentCapabilities} from '../controllers/paymentController.js';
+const router=Router();
+router.get('/capabilities',paymentCapabilities);
+router.use(protect,verifiedEmail);
+router.post('/create-stripe-session',createStripeSession);
+router.get('/payment-methods',getPaymentMethods);
+router.post('/payment-methods',unavailable);
+router.post('/process',unavailable);router.post('/create-intent',unavailable);
 export default router;

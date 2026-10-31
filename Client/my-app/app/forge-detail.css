@@ -1,0 +1,83 @@
+.forge-product-sections {
+  position: sticky;
+  top: var(--forge-header-size, 128px);
+  z-index: 20;
+  display: flex;
+  gap: 24px;
+  min-width: 0;
+  max-width: 100%;
+  overflow-x: auto;
+  background: #090d14f5;
+  border-top: 1px solid var(--border);
+  border-bottom: 1px solid var(--border);
+  margin-bottom: 28px;
+}
+.forge-product-sections a {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  min-height: 52px;
+  padding-inline: 2px;
+  border-bottom: 2px solid transparent;
+  color: var(--muted-foreground);
+  font-size: 0.9375rem;
+  font-weight: 600;
+}
+.forge-product-sections a:hover,
+.forge-product-sections a[aria-current] {
+  color: var(--primary);
+  border-bottom-color: var(--primary);
+}
+.forge-product-detail
+  :is(#overview, #specifications, #compatibility, #questions, #reviews) {
+  /* The document already reserves 150px of scroll padding for the header. */
+  scroll-margin-top: max(24px, calc(var(--forge-header-size, 128px) - 80px));
+}
+.forge-product-detail .forge-buy-box {
+  top: calc(var(--forge-header-size, 128px) + 70px);
+}
+@media (min-width: 768px) {
+  .forge-product-detail .forge-buy-box {
+    /* Keep the buy controls sticky through both gallery and detail rows. */
+    grid-column: 2;
+    grid-row: 1 / span 2;
+    max-height: calc(100svh - var(--forge-header-size, 128px) - 88px);
+    overflow-y: auto;
+  }
+}
+.forge-product-detail .forge-spec-highlights {
+  grid-template-columns: repeat(auto-fit, minmax(100px, 1fr));
+}
+.forge-fit-link {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  min-height: 48px;
+  gap: 12px;
+  margin-top: 14px;
+  padding: 12px 14px;
+  color: var(--primary);
+  border: 1px solid #62f0dd35;
+  border-radius: 6px;
+  font-size: 0.9375rem;
+}
+.forge-demo-notice {
+  color: #c2b8ef;
+  background: #a696ff0b;
+  border: 1px solid #a696ff2b;
+  border-radius: 6px;
+  padding: 10px 12px;
+  margin-top: 12px;
+  font-size: 0.875rem;
+  line-height: 1.6;
+}
+@media (max-width: 767px) {
+  .forge-product-sections {
+    gap: 22px;
+    margin-bottom: 20px;
+  }
+  .forge-product-sections a {
+    min-height: 46px;
+    font-size: 0.875rem;
+  }
+}

@@ -104,23 +104,23 @@ const reviewSchema = new mongoose.Schema(
 // Prevent duplicate reviews by the same user for the same product/game
 reviewSchema.index(
   { user: 1, product: 1 },
-  { 
-    unique: true, 
-    partialFilterExpression: { 
+  {
+    unique: true,
+    partialFilterExpression: {
       product: { $exists: true },
-      isActive: true 
-    } 
+      isActive: true
+    }
   }
 );
 
 reviewSchema.index(
   { user: 1, game: 1 },
-  { 
-    unique: true, 
-    partialFilterExpression: { 
+  {
+    unique: true,
+    partialFilterExpression: {
       game: { $exists: true },
-      isActive: true 
-    } 
+      isActive: true
+    }
   }
 );
 
@@ -139,19 +139,6 @@ reviewSchema.index({ isActive: 1 });
 /**
  * Pre-find Hook: Automatically populate user data with error handling
  */
-reviewSchema.pre(/^find/, function (next) {
-  this.find({ isActive: true });
-  
-  this.populate({
-    path: "user",
-    select: "name avatar verified",
-    options: { lean: true }
-  }).catch(err => {
-    console.error('User population failed:', err.message);
-  });
-  next();
-});
-
 /**
  * Post-save Hook: Update average ratings with error handling
  */
@@ -230,9 +217,9 @@ reviewSchema.statics.calculateAverageRatings = async function (
   try {
     const stats = await this.aggregate([
       {
-        $match: { 
+        $match: {
           [targetField]: targetId,
-          isActive: true 
+          isActive: true
         },
       },
       {

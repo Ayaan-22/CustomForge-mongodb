@@ -1,0 +1,134 @@
+.faa-shell { position: relative; display: grid; grid-template-columns: minmax(0,1.1fr) minmax(0,1fr); min-height: 100dvh; background: var(--background); }
+.faa-theme-switch { position: absolute; z-index: 2; top: 18px; right: 20px; }
+.faa-story { position: relative; display: flex; flex-direction: column; justify-content: space-between; gap: clamp(16px,3dvh,28px); overflow: hidden; padding: clamp(24px,4dvh,48px) clamp(28px,4vw,64px); border-right: 1px solid var(--border); background: radial-gradient(ellipse at 14% 70%,color-mix(in srgb, var(--fa-accent-soft) 40%, transparent),transparent 62%),radial-gradient(ellipse at 90% 20%,color-mix(in srgb, var(--fa-violet) 16%, transparent),transparent 58%),var(--fa-surface-subtle); }
+.faa-story::before { content: ""; position: absolute; inset: 0; background-image: linear-gradient(color-mix(in srgb, var(--fa-text-tertiary) 3%, transparent) 1px,transparent 1px),linear-gradient(90deg,color-mix(in srgb, var(--fa-text-tertiary) 3%, transparent) 1px,transparent 1px); background-size: 48px 48px; mask-image: linear-gradient(transparent,#000 20%,#000 70%,transparent); pointer-events: none; }
+.faa-story > * { position: relative; }
+.faa-story-content { max-width: 520px; }
+.faa-kicker { margin: 0; color: var(--primary); font: 500 0.875rem/1.6 var(--font-admin-mono,monospace); letter-spacing: .05em; text-transform: uppercase; }
+.faa-story h2 { margin: 12px 0; color: var(--foreground); font-size: clamp(38px,min(4vw,7dvh),60px); line-height: 1.1; letter-spacing: -.035em; font-weight: 650; }
+.faa-story h2 span { color: var(--primary); }
+.faa-story-description { max-width: 350px; color: var(--fa-text-tertiary); font-size: 1.125rem; line-height: 1.6; }
+.faa-workspace-art { position: relative; height: clamp(160px,24dvh,200px); max-width: 420px; margin: 20px 0 0; }
+.faa-art-orbit { position: absolute; width: clamp(112px,18dvh,140px); height: clamp(112px,18dvh,140px); left: 50%; top: calc(50% - 10px); transform: translate(-50%,-50%); border: 1px dashed color-mix(in srgb, var(--primary) 15%, transparent); border-radius: 50%; box-shadow: 0 0 80px color-mix(in srgb, var(--primary) 4%, transparent); }
+.faa-art-connections { position: absolute; width: 100%; height: calc(100% - 20px); }
+.faa-art-node { position: absolute; display: flex; align-items: center; gap: 10px; min-height: 50px; padding: 12px 16px; border: 1px solid var(--input); border-radius: 10px; background: color-mix(in srgb, var(--card) 92%, transparent); box-shadow: var(--fa-shadow); color: var(--fa-text-secondary); font-size: 1rem; }
+.faa-art-node svg { width: 18px; height: 18px; color: var(--primary); }
+.faa-art-node.is-commerce { top: 10px; left: 0; }
+.faa-art-node.is-inventory { bottom: 30px; left: 0; }
+.faa-art-node.is-insights { top: calc(50% - 35px); right: 0; }
+.faa-art-node.is-insights svg { color: var(--fa-violet); }
+.faa-art-core { position: absolute; top: calc(50% - 10px); left: 50.4%; transform: translate(-50%,-50%); display: grid; width: 44px; height: 44px; place-items: center; }
+.faa-art-core .fa-brand svg { width: 28px; height: 28px; }
+.faa-art-caption { position: absolute; bottom: 0; left: 0; right: 0; color: var(--fa-text-tertiary); font: 0.875rem/1.6 var(--font-admin-mono,monospace); letter-spacing: .05em; text-transform: uppercase; text-align: center; }
+.faa-story-footer { display: flex; align-items: flex-start; gap: 12px; max-width: 410px; padding-top: 16px; border-top: 1px solid color-mix(in srgb, var(--border) 50%, transparent); }
+.faa-story-footer > svg { flex-shrink: 0; width: 21px; height: 21px; color: var(--primary); }
+.faa-story-footer strong { color: var(--fa-text-secondary); font-size: 1rem; font-weight: 550; }
+.faa-story-footer p { margin-top: 6px; color: var(--fa-text-tertiary); font-size: 1rem; line-height: 1.6; }
+.faa-form-side { position: relative; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: clamp(12px,2dvh,24px); min-width: 0; padding: clamp(20px,3dvh,40px) clamp(24px,3.2vw,48px); background: radial-gradient(ellipse at top right,color-mix(in srgb, var(--fa-surface-raised) 15%, transparent),transparent 70%),var(--background); }
+.faa-form-card { width: 100%; max-width: 400px; display: grid; gap: clamp(14px,2.2dvh,22px); }
+.faa-form-header h1 { margin: 8px 0; color: var(--foreground); font-size: clamp(28px,2.5vw,34px); font-weight: 650; line-height: 1.2; letter-spacing: -.025em; }
+.faa-form-header > p:last-child { color: var(--fa-text-tertiary); font-size: 1.125rem; line-height: 1.6; }
+.faa-mobile-brand { display: none; }
+.faa-form { display: grid; gap: 14px; }
+.faa-field { display: grid; min-width: 0; gap: 6px; }
+.faa-field > label, .faa-label-row > label { color: var(--fa-text-secondary); font-size: 1rem; font-weight: 500; }
+.faa-label-row { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+.faa-label-row a { display: inline-flex; align-items: center; min-height: 44px; margin-block: -12px; color: var(--primary); font-size: 1rem; transition: color 160ms; }
+.faa-label-row a:hover { text-decoration: underline; text-underline-offset: 3px; }
+.faa-input-wrap { position: relative; }
+.faa-input-wrap > svg { position: absolute; left: 14px; top: 50%; width: 17px; height: 17px; transform: translateY(-50%); color: var(--fa-text-tertiary); pointer-events: none; }
+.faa-shell .faa-form .faa-field .faa-input-wrap > input { width: 100%; min-height: 48px; padding: 10px 46px 10px 43px; border: 1px solid var(--input); border-radius: 8px; background: var(--fa-input-surface); color: var(--foreground); font-size: 1.125rem; line-height: 1.5; transition: border-color 160ms,box-shadow 160ms; }
+.faa-shell .faa-form .faa-field .faa-input-wrap > input::placeholder { color: var(--fa-text-tertiary); opacity: 1; }
+.faa-shell .faa-form .faa-field .faa-input-wrap > input:focus { outline: none; border-color: var(--primary); box-shadow: 0 0 0 3px color-mix(in srgb, var(--primary) 9%, transparent); }
+.faa-password-toggle { position: absolute; right: 3px; top: 50%; width: 44px; min-height: 44px; display: grid; place-items: center; transform: translateY(-50%); border-radius: 7px; background: transparent; color: var(--fa-text-tertiary); cursor: pointer; }
+.faa-password-toggle:hover { color: var(--primary); }
+.faa-password-toggle svg { width: 17px; height: 17px; }
+.faa-shell .faa-submit { display: flex; min-height: 48px; width: 100%; justify-content: center; align-items: center; gap: 9px; padding: 12px 18px; border: 1px solid var(--primary); border-radius: 8px; background: var(--primary); color: var(--primary-foreground); font-size: 1.125rem; font-weight: 650; transition: background 160ms,box-shadow 160ms; cursor: pointer; }
+.faa-shell .faa-submit:hover { background: color-mix(in srgb, var(--primary) 92%, var(--foreground)); box-shadow: 0 0 24px color-mix(in srgb, var(--primary) 6%, transparent); }
+.faa-shell .faa-submit:disabled { opacity: .5; cursor: not-allowed; }
+.faa-submit svg { width: 16px; height: 16px; }
+.faa-footer { padding-top: 12px; border-top: 1px solid var(--border); color: var(--fa-text-tertiary); font-size: 1rem; text-align: center; line-height: 1.7; }
+.faa-footer a { display: inline-flex; align-items: center; gap: 4px; min-height: 44px; color: var(--primary); font-weight: 500; }
+.faa-footer a:hover { text-decoration: underline; text-underline-offset: 3px; }
+.faa-form-fineprint { display: flex; align-items: center; gap: 6px; color: var(--fa-text-tertiary); font-size: 0.9375rem; }
+.faa-form-fineprint svg { width: 13px; height: 13px; }
+.faa-error, .faa-notice { display: flex; align-items: flex-start; gap: 9px; padding: 10px 12px; border: 1px solid color-mix(in srgb, var(--fa-danger) 25%, transparent); border-radius: 8px; background: color-mix(in srgb, var(--fa-danger) 3%, transparent); color: var(--fa-danger); font-size: 1.125rem; line-height: 1.6; overflow-wrap: anywhere; }
+.faa-notice { border-color: color-mix(in srgb, var(--fa-violet) 19%, transparent); background: color-mix(in srgb, var(--fa-violet) 3%, transparent); color: var(--fa-violet); }
+.faa-error > svg, .faa-notice > svg { width: 15px; height: 15px; margin-top: 2px; flex-shrink: 0; }
+.faa-back-link { display: inline-flex; align-items: center; gap: 7px; width: fit-content; min-height: 44px; margin-bottom: -5px; color: var(--fa-text-tertiary); font-size: 1rem; }
+.faa-back-link:hover { color: var(--primary); }
+.faa-back-link svg { width: 14px; height: 14px; }
+.faa-result { display: grid; gap: 14px; justify-items: center; padding: 12px 0; text-align: center; }
+.faa-result-icon { display: grid; width: 64px; height: 64px; place-items: center; border: 1px solid color-mix(in srgb, var(--primary) 25%, transparent); border-radius: 18px; background: color-mix(in srgb, var(--primary) 4%, transparent); color: var(--primary); }
+.faa-result-icon svg { width: 28px; height: 28px; }
+.faa-result-icon.is-error { color: var(--fa-danger); border-color: color-mix(in srgb, var(--fa-danger) 25%, transparent); background: color-mix(in srgb, var(--fa-danger) 3%, transparent); }
+.faa-result h2 { color: var(--foreground); font-size: 1.25rem; font-weight: 600; letter-spacing: -.025em; }
+.faa-result p { color: var(--fa-text-tertiary); font-size: 1.125rem; line-height: 1.8; overflow-wrap: anywhere; }
+.faa-result strong { color: var(--fa-text-secondary); font-weight: 550; }
+.faa-text-button { min-height: 44px; padding: 10px; color: var(--primary); font-size: 1rem; font-weight: 500; cursor: pointer; }
+.faa-text-button:hover { color: var(--primary); }
+.faa-shell .faa-form .faa-field .faa-code-input > input { padding-inline: 18px; font: 500 1.5rem/1.5 var(--font-admin-mono,monospace); letter-spacing: .3em; text-align: center; }
+.faa-shell .faa-form .faa-field .faa-code-input > input::placeholder { font-size: 1.125rem; letter-spacing: .05em; }
+.faa-field-help { color: var(--fa-text-tertiary); font-size: 1rem; line-height: 1.6; }
+.faa-shell a:focus-visible, .faa-shell button:focus-visible { outline: 2px solid var(--primary); outline-offset: 4px; }
+.faa-shell .faa-spinning { animation: faa-spin .9s linear infinite; }
+@keyframes faa-spin { to { transform: rotate(360deg); } }
+/* Fit the form to the available height while retaining 44px interaction targets. */
+.faa-shell-register .faa-form-card { max-width: 480px; }
+.faa-shell-register .faa-form { grid-template-columns: repeat(2,minmax(0,1fr)); gap: 14px 16px; }
+.faa-shell-register .faa-form > .faa-field:nth-child(-n+2), .faa-shell-register .faa-submit { grid-column: 1 / -1; }
+.faa-shell-register .faa-form .faa-field .faa-input-wrap > input { padding-right: 44px; }
+
+@media (max-width: 1100px) {
+  .faa-story { padding-inline: 28px; }
+  .faa-art-node { padding: 10px; font-size: 0.9375rem; gap: 6px; }
+  .faa-art-node svg { width: 15px; height: 15px; }
+  .faa-form-side { padding-inline: 28px; }
+}
+@media (max-width: 980px) {
+  .faa-shell { grid-template-columns: minmax(0,1fr); }
+  .faa-story { display: none; }
+  .faa-form-side { min-height: 100dvh; gap: 20px; padding: 24px; }
+  .faa-mobile-brand { display: block; width: 100%; max-width: 400px; }
+  .faa-shell-register .faa-mobile-brand { max-width: 480px; }
+  .faa-form-fineprint { display: none; }
+  .faa-shell .faa-form .faa-field .faa-input-wrap > input { font-size: 1.125rem; }
+  .faa-form-header h1 { font-size: 30px; }
+  .faa-shell .faa-form .faa-field .faa-code-input > input { font-size: 1.5rem; }
+}
+@media (max-width: 540px) {
+  .faa-shell-register .faa-form { grid-template-columns: minmax(0,1fr); }
+  .faa-form-header > .faa-kicker { display: none; }
+  .faa-form-header h1 { margin: 0 0 6px; font-size: 28px; }
+}
+@media (max-height: 740px) {
+  .faa-form-side { gap: 12px; padding-block: 16px; }
+  .faa-form-card { gap: 12px; }
+  .faa-form-header h1 { margin-block: 6px; font-size: 30px; }
+  .faa-form, .faa-shell-register .faa-form { row-gap: 12px; }
+  .faa-field { gap: 4px; }
+  .faa-shell .faa-form .faa-field .faa-input-wrap > input { min-height: 44px; padding-block: 9px; }
+  .faa-shell .faa-submit { min-height: 44px; padding-block: 10px; }
+  .faa-footer { padding-top: 8px; }
+  .faa-error, .faa-notice { padding: 8px 10px; font-size: 1rem; line-height: 1.55; }
+}
+@media (max-height: 620px) {
+  .faa-form-fineprint { display: none; }
+}
+@media (min-width: 981px) and (max-height: 600px) {
+  .faa-workspace-art { display: none; }
+}
+@media (max-width: 980px) and (max-height: 740px) {
+  .faa-form-side { gap: 14px; padding: 12px 20px; }
+  .faa-theme-switch { top: 12px; right: 16px; }
+}
+@media (max-width: 540px) and (max-height: 740px) {
+  .faa-form-header h1 { margin: 0 0 6px; font-size: 28px; }
+}
+@media (max-width: 380px) {
+  .faa-form-side { padding-inline: 18px; }
+  .faa-label-row a { font-size: 1rem; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .faa-shell *, .faa-shell .faa-spinning { animation: none !important; transition: none !important; }
+}

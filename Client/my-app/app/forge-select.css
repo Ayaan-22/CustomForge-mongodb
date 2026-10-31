@@ -1,0 +1,16 @@
+/* Field layout; all menu styling is shared in forge-controls.css. */
+.forge-select-field {
+  display: grid;
+  align-content: start;
+  gap: 7px;
+  min-width: 0;
+}
+.forge-select-field > label {
+  display: block;
+  color: #c2cfdf;
+  font-size: 0.9375rem;
+  line-height: 1.4;
+}
+.forge-select-trigger[data-slot="select-trigger"] {
+  width: 100%;
+}

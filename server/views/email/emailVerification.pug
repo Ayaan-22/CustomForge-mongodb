@@ -1,52 +1,10 @@
-doctype html
-html
-  head
-    meta(charset="UTF-8")
-    title Verify Your Email
-    style.
-      body {
-        font-family: 'Arial', sans-serif;
-        background-color: #f2f2f2;
-        margin: 0;
-        padding: 30px;
-        display: flex;
-        justify-content: center;
-        align-items: center;
-        min-height: 100vh;
-      }
-      .container {
-        background: #ffffff;
-        padding: 30px 20px;
-        border-radius: 8px;
-        box-shadow: 0 8px 16px rgba(0,0,0,0.1);
-        text-align: center;
-        width: 100%;
-        max-width: 450px;
-      }
-      h1 {
-        color: #333;
-        margin-bottom: 20px;
-      }
-      p {
-        color: #666;
-        margin-bottom: 25px;
-        font-size: 16px;
-      }
-      a.button {
-        display: inline-block;
-        background-color: #ff9800;
-        color: #fff;
-        padding: 12px 25px;
-        border-radius: 5px;
-        text-decoration: none;
-        font-weight: bold;
-        transition: background-color 0.3s;
-      }
-      a.button:hover {
-        background-color: #e68900;
-      }
-  body
-    .container
-      h1 Verify Your Email
-      p Hi #{firstName}, please verify your email address by clicking below:
-      a.button(href=url) Verify Email
+extends baseEmail
+block settings
+  - const preheader = 'Confirm your email address to activate your CustomForge account.'
+  - const eyebrow = 'ACCOUNT / VERIFICATION'
+  - const heading = 'One step closer. Verify your email.'
+  - const actionLabel = 'Verify my email'
+block content
+  +paragraph('Hi ' + firstName + ',')
+  +paragraph('Confirm that this email address belongs to you to finish setting up your CustomForge account.')
+  +notice('Keep your account secure', 'Use your latest verification email. If the link has expired, request a new one from CustomForge. If you did not request this email, you can ignore it.')

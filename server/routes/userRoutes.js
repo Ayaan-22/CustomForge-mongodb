@@ -1,49 +1,24 @@
-// server/routes/userRoutes.js
-
-import express from "express";
-import {
-  getMe,
-  updateMe,
-  deleteMe,
-  getWishlist,
-  getUserOrders,
-} from "../controllers/userController.js";
-
-import {
-  protect,
-  verifiedEmail,
-  twoFactorAuth,
-} from "../middleware/authMiddleware.js";
-
-const router = express.Router();
-
-/* ============================
-   ALL ROUTES REQUIRE LOGIN + VERIFIED EMAIL
-   ============================ */
-router.use(protect);
-router.use(verifiedEmail);
-
-/* ============================
-   ACCOUNT MANAGEMENT
-   ============================ */
-
-// GET profile (no 2FA needed for viewing)
-router.get("/me", getMe);
-
-// Update profile (PROTECTED by 2FA)
-router.patch("/update-me", twoFactorAuth, updateMe);
-
-// Deactivate account (HIGH-RISK → require 2FA)
-router.delete("/delete-me", twoFactorAuth, deleteMe);
-
-/* ============================
-   WISHLIST & ORDERS
-   ============================ */
-
-// Wishlist - low risk, no 2FA needed
-router.get("/wishlist", getWishlist);
-
-// Orders - optional 2FA, but recommended to protect
-router.get("/orders", twoFactorAuth, getUserOrders);
-
+import {Router} from 'express';
+import * as users from '../controllers/userController.js';
+import {getMyOrders} from '../controllers/orderController.js';
+import {protect,optionalAuth,verifiedEmail,twoFactorAuth} from '../middleware/authMiddleware.js';
+const router=Router();
+router.get('/me',optionalAuth,users.getMe);
+router.use(protect,verifiedEmail);
+router.patch('/profile',twoFactorAuth,users.updateMe);
+router.delete('/delete-account',twoFactorAuth,users.deleteMe);
+router.get('/wishlist',users.getWishlist);
+router.post('/wishlist/:productId',users.addToWishlist);
+router.delete('/wishlist/:productId',users.removeFromWishlist);
+router.get('/orders',getMyOrders);
+router.get('/addresses',users.getAddresses);
+router.post('/addresses',users.addAddress);
+router.patch('/addresses/:id/default',users.setDefaultAddress);
+router.patch('/addresses/:id',users.updateAddress);
+router.delete('/addresses/:id',users.deleteAddress);
+router.get('/payment-methods',users.getPaymentMethods);
+router.post('/payment-methods',users.unavailablePaymentMethod);
+router.patch('/payment-methods/:id',users.unavailablePaymentMethod);
+router.patch('/payment-methods/:id/default',users.unavailablePaymentMethod);
+router.delete('/payment-methods/:id',users.unavailablePaymentMethod);
 export default router;

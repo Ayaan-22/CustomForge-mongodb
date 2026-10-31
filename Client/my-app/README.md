@@ -1,54 +1,13 @@
-# React + TypeScript + Vite
+# CustomForge customer storefront
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+The storefront uses the Express API documented in ../docs/api/route-security-map.md. Browser requests always use the storefront's own origin and `/api/v1`; Next.js forwards them to `API_BACKEND_URL` (default `http://localhost:5000`). Server-side service calls use that same server-only backend setting directly. Configure it when deploying. A trailing `/api/v1` suffix is normalized, so either the backend origin or its API base is accepted. There is no local API or production mock fallback.
 
-Currently, two official plugins are available:
+The legacy `NEXT_PUBLIC_API_BASE_URL` is ignored by the shared transport. Calling `localhost` directly from a storefront opened at `127.0.0.1` creates a different browser site and withholds `SameSite=Strict` session/CSRF cookies, even with credentials enabled. Keep the Next API rewrite available on the deployed storefront and preserve the existing cookie and CSRF protections; do not switch cookies to a weaker policy to accommodate direct cross-site API calls. API origin allowlists still apply on the Express side.
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+Public product, category, brand, game, prebuilt and approved-review reads do not require login. Customer mutations use the in-memory bearer token, HttpOnly rotating refresh cookie and a fresh CSRF token. Guest cart and wishlist identifiers are the only persisted customer state. No access or refresh tokens are stored in browser storage.
 
-## Expanding the ESLint configuration
+Services define API contracts; hooks use TanStack Query. Zustand holds session and guest state. Express and the database remain authoritative for prices, inventory, coupons and payment state.
 
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
+Run npm test, npm run lint, npm run typecheck and npm run build. Run the backend separately for integration testing. See the [root README](../README.md) for setup, payment limitations and maintained checks.
 
-```js
-export default tseslint.config({
-  extends: [
-    // Remove ...tseslint.configs.recommended and replace with this
-    ...tseslint.configs.recommendedTypeChecked,
-    // Alternatively, use this for stricter rules
-    ...tseslint.configs.strictTypeChecked,
-    // Optionally, add this for stylistic rules
-    ...tseslint.configs.stylisticTypeChecked,
-  ],
-  languageOptions: {
-    // other options...
-    parserOptions: {
-      project: ['./tsconfig.node.json', './tsconfig.app.json'],
-      tsconfigRootDir: import.meta.dirname,
-    },
-  },
-})
-```
-
-You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
-
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x'
-import reactDom from 'eslint-plugin-react-dom'
-
-export default tseslint.config({
-  plugins: {
-    // Add the react-x and react-dom plugins
-    'react-x': reactX,
-    'react-dom': reactDom,
-  },
-  rules: {
-    // other rules...
-    // Enable its recommended typescript rules
-    ...reactX.configs['recommended-typescript'].rules,
-    ...reactDom.configs.recommended.rules,
-  },
-})
-```
+Automated storefront tests are grouped by feature in `tests/`, separate from application routes and modules. The [test guide](tests/README.md) documents the layout, mock boundaries and commands. To run one suite from the repository root, use `npm --prefix client test -- tests/transport/apiClient.test.ts`.

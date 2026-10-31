@@ -1,559 +1,94 @@
-// File: server/controllers/productController.js
-import Product from "../models/Product.js";
-import APIFeatures from "../utils/apiFeatures.js";
-import AppError from "../utils/appError.js";
-import asyncHandler from "express-async-handler";
-import User from "../models/User.js";
-import Review from "../models/Review.js";
-import Order from "../models/Order.js";
-import { logger } from "../middleware/logger.js";
-import mongoose from "mongoose";
-import validator from 'validator';
+import asyncHandler from 'express-async-handler';
+import Product from '../models/Product.js';
+import Review from '../models/Review.js';
+import Game from '../models/Game.js';
+import PrebuiltPc from '../models/PrebuiltPc.js';
+import Order from '../models/Order.js';
+import AppError from '../utils/appError.js';
+import {requireId,publicProduct,entity,pagination} from '../utils/serialize.js';
+import {parseCatalogFilters,matchesSpecFilters,buildCatalogFacets,FACET_CANDIDATE_LIMIT} from '../utils/catalogFacets.js';
 
-/**
- * Enhanced input sanitization utility
- */
-const sanitizeInput = (input, options = {}) => {
-  const { allowHTML = false, maxLength = 1000 } = options;
-  
-  if (typeof input === 'string') {
-    let sanitized = validator.trim(input);
-    if (sanitized.length > maxLength) {
-      sanitized = sanitized.substring(0, maxLength);
-    }
-    return allowHTML ? sanitized : validator.escape(sanitized);
+const escapeRegex = value=>value.replace(/[.*+?^${}()|[\]\\]/g,'\\$&');
+export function catalogQuery(filters,{includeBrands=true}={}) {
+  const query={isActive:true};
+  if(filters.category)query.category=filters.category;
+  if(includeBrands&&filters.brands.length)query.brand={$in:filters.brands};
+  if(filters.availability)query.availability=filters.availability;
+  if(filters.isFeatured!==null)query.isFeatured=filters.isFeatured;
+  if(filters.discounted)query.discountPercentage={$gt:0};
+  for(const [field,min,max] of [['finalPrice',filters.minPrice,filters.maxPrice],['ratings.average',filters.minRating,filters.maxRating]]) {
+    if(min!==null||max!==null) query[field]={...(min!==null?{$gte:min}:{}),...(max!==null?{$lte:max}:{})};
   }
-  
-  if (Array.isArray(input)) {
-    return input.map(item => sanitizeInput(item, options));
+  if(filters.q&&filters.q.length>=2)query.$or=['name','brand','description'].map(field=>({[field]:{$regex:escapeRegex(filters.q),$options:'i'}}));
+  if(filters.features.length)query.features={$all:filters.features};
+  return query;
+}
+const sortOptions = {price:'finalPrice','-price':'-finalPrice',price_asc:'finalPrice',price_desc:'-finalPrice',rating:'-ratings.average','-ratings.average':'-ratings.average',newest:'-createdAt',createdAt:'createdAt','-createdAt':'-createdAt',created_at:'createdAt','-created_at':'-createdAt',updated_at:'updatedAt','-updated_at':'-updatedAt',name:'name','-name':'-name',finalPrice:'finalPrice','-finalPrice':'-finalPrice',final_price:'finalPrice','-final_price':'-finalPrice',original_price:'originalPrice','-original_price':'-originalPrice',discount_percentage:'discountPercentage','-discount_percentage':'-discountPercentage'};
+export const getAllProducts=asyncHandler(async(req,res)=>{
+  const filters=parseCatalogFilters({...req.query,...(req.params.category?{category:req.params.category}:{})});
+  const {page,limit,skip}=pagination(req.query);
+  const query=catalogQuery(filters);
+  if(Object.keys(filters.specs).length) {
+    const count=await Product.countDocuments(query);
+    if(count>FACET_CANDIDATE_LIMIT)throw new AppError('Narrow the category, search or budget before filtering specifications',422);
+    const matches=(await Product.find(query).lean()).filter(row=>matchesSpecFilters(row,filters.specs)).map(row=>row._id);
+    query._id={$in:matches};
   }
-  
-  if (typeof input === 'object' && input !== null) {
-    const sanitized = {};
-    Object.keys(input).forEach(key => {
-      sanitized[key] = sanitizeInput(input[key], options);
-    });
-    return sanitized;
-  }
-  
-  return input;
-};
-
-/**
- * Query sanitization for APIFeatures
- */
-const sanitizeQuery = (query) => {
-  const allowedFilters = ['category', 'brand', 'price', 'ratings.average', 'stock', 'availability'];
-  const sanitized = {};
-  
-  Object.keys(query).forEach(key => {
-    if (allowedFilters.includes(key)) {
-      sanitized[key] = sanitizeInput(query[key]);
-    }
-  });
-  
-  return sanitized;
-};
-
-/**
- * @desc    Public Product Controllers
- */
-
-/**
- * @desc    Get all products with filtering, sorting, pagination
- * @route   GET /api/products
- * @access  Public
- */
-export const getAllProducts = asyncHandler(async (req, res) => {
-  // Sanitize query parameters
-  const sanitizedQuery = sanitizeQuery(req.query);
-  
-  logger.info("Fetching products", { 
-    route: req.originalUrl, 
-    method: req.method, 
-    query: Object.keys(sanitizedQuery) 
-  });
-
-  // Execute query with advanced features and security
-  const features = new APIFeatures(
-    Product.find({ isActive: true })
-      .select('name category brand finalPrice images ratings stock availability')
-      .lean(),
-    sanitizedQuery
-  )
-    .filter()
-    .sort()
-    .limitFields()
-    .paginate();
-
-  const products = await features.query;
-
-  // Get count for pagination
-  const countFeatures = new APIFeatures(
-    Product.countDocuments({ isActive: true }),
-    sanitizedQuery
-  ).filter();
-
-  const count = await countFeatures.query;
-
-  res.status(200).json({
-    success: true,
-    count,
-    results: products.length,
-    data: products,
-  });
-  
-  logger.info("Fetched products successfully", { 
-    count, 
-    results: products.length 
-  });
+  const sort=sortOptions[req.query.sort||'-createdAt'];
+  if(!sort)throw new AppError('Invalid catalog sorting',400);
+  const [rows,total]=await Promise.all([Product.find(query).sort(sort+' _id').skip(skip).limit(limit).lean(),Product.countDocuments(query)]);
+  res.json({success:true,data:rows.map(publicProduct),total,page,limit,results:rows.length});
 });
-
-/**
- * @desc    Get single product with reviews
- * @route   GET /api/products/:id
- * @access  Public
- */
-export const getProduct = asyncHandler(async (req, res, next) => {
-  // Validate product ID format
-  if (!mongoose.Types.ObjectId.isValid(req.params.id)) {
-    logger.warn("Invalid product ID format", { id: req.params.id });
-    return next(new AppError("Invalid product ID format", 400));
-  }
-
-  try {
-    // Use optimized aggregation for better performance
-    const product = await Product.aggregate([
-      { $match: { 
-        _id: new mongoose.Types.ObjectId(req.params.id),
-        isActive: true 
-      }},
-      {
-        $lookup: {
-          from: "reviews",
-          let: { productId: "$_id" },
-          pipeline: [
-            { $match: { 
-              $expr: { $eq: ["$product", "$$productId"] },
-              isActive: true 
-            }},
-            { $sort: { createdAt: -1 } },
-            { $limit: 10 }, // Reduced limit for performance
-            {
-              $lookup: {
-                from: "users",
-                localField: "user",
-                foreignField: "_id",
-                as: "user",
-                pipeline: [
-                  { $project: { name: 1, avatar: 1, verified: 1 } }
-                ]
-              }
-            },
-            { $unwind: "$user" },
-            { 
-              $project: { 
-                rating: 1, 
-                title: 1, 
-                comment: 1, 
-                createdAt: 1, 
-                user: 1, 
-                verifiedPurchase: 1,
-                helpfulVotes: 1 
-              } 
-            }
-          ],
-          as: "reviews"
-        }
-      },
-      {
-        $lookup: {
-          from: "games",
-          localField: "_id",
-          foreignField: "product",
-          as: "gameDetails"
-        }
-      },
-      {
-        $lookup: {
-          from: "prebuiltpcs",
-          localField: "_id",
-          foreignField: "product",
-          as: "pcDetails"
-        }
-      },
-      { $unwind: { path: "$gameDetails", preserveNullAndEmptyArrays: true } },
-      { $unwind: { path: "$pcDetails", preserveNullAndEmptyArrays: true } }
-    ]);
-
-    if (!product || product.length === 0) {
-      logger.warn("Product not found", { id: req.params.id });
-      return next(new AppError("No product found with that ID", 404));
-    }
-
-    res.status(200).json({
-      success: true,
-      data: product[0],
-    });
-    
-    logger.info("Fetched product successfully", { id: req.params.id });
-  } catch (error) {
-    logger.error("Error fetching product", {
-      error: error.message,
-      id: req.params.id,
-      stack: process.env.NODE_ENV === 'development' ? error.stack : undefined
-    });
-    return next(new AppError("Failed to fetch product", 500));
-  }
+export const getCatalogFacets=asyncHandler(async(req,res)=>{
+  const filters=parseCatalogFilters(req.query),query=catalogQuery(filters,{includeBrands:false});
+  const total=await Product.countDocuments(query);
+  const available=total<=FACET_CANDIDATE_LIMIT;
+  const rows=available?await Product.find(query).select('category brand specifications').lean():[];
+  res.json({success:true,data:{available,candidateLimit:FACET_CANDIDATE_LIMIT,scopeTotal:total,scope:'Category, search, budget, stock, rating and deals before brand and specifications',reason:available?null:'Narrow the catalog to see complete filters',...(available?buildCatalogFacets(rows,filters.category):{brands:[],specs:[]})}});
 });
-
-/**
- * @desc    Get top rated products
- * @route   GET /api/products/top
- * @access  Public
- */
-export const getTopProducts = asyncHandler(async (req, res) => {
-  const products = await Product.find({ 
-    isActive: true,
-    "ratings.totalReviews": { $gte: 5 },
-    "ratings.average": { $gte: 4.0 }
-  })
-    .select('name category brand finalPrice images ratings stock')
-    .sort({ "ratings.average": -1, "ratings.totalReviews": -1 })
-    .limit(10)
-    .lean();
-
-  res.status(200).json({
-    success: true,
-    data: products,
-  });
+export const getProduct=asyncHandler(async(req,res)=>{
+  const row=await Product.findOne({_id:requireId(req.params.id),isActive:true}).lean();
+  if(!row)throw new AppError('Product not found',404);
+  const [game,pc,reviews]=await Promise.all([Game.findOne({product:row._id}).lean(),PrebuiltPc.findOne({product:row._id}).lean(),Review.find({product:row._id,isActive:true}).sort('-createdAt').limit(20).lean()]);
+  res.json({success:true,data:{...publicProduct(row),gameDetails:entity(game),pcDetails:entity(pc),reviews:reviews.map(publicReview)}});
 });
-
-/**
- * @desc    Get related products (same category)
- * @route   GET /api/products/:id/related
- * @access  Public
- */
-export const getRelatedProducts = asyncHandler(async (req, res, next) => {
-  if (!mongoose.Types.ObjectId.isValid(req.params.id)) {
-    return next(new AppError("Invalid product ID format", 400));
-  }
-
-  const product = await Product.findById(req.params.id)
-    .select('category brand')
-    .lean();
-    
-  if (!product) {
-    logger.warn("Product not found for related products", { id: req.params.id });
-    return next(new AppError("No product found with that ID", 404));
-  }
-
-  const relatedProducts = await Product.find({
-    category: product.category,
-    _id: { $ne: product._id },
-    isActive: true
-  })
-    .select('name category brand finalPrice images ratings')
-    .limit(8)
-    .lean();
-
-  res.status(200).json({
-    success: true,
-    data: relatedProducts,
-  });
-  
-  logger.info("Fetched related products", { 
-    id: req.params.id, 
-    results: relatedProducts.length 
-  });
+const publicReview=row=>({id:String(row._id),rating:row.rating,title:row.title,comment:row.comment,createdAt:row.createdAt,verifiedPurchase:row.verifiedPurchase,helpfulVotes:row.helpfulVotes,user:null});
+export const getProductReviews=asyncHandler(async(req,res)=>{
+  const {page,limit,skip}=pagination(req.query),query={product:requireId(req.params.id),isActive:true};
+  const [rows,total]=await Promise.all([Review.find(query).sort('-createdAt').skip(skip).limit(limit).lean(),Review.countDocuments(query)]);
+  res.json({success:true,data:rows.map(publicReview),total,page,limit});
 });
-
-/**
- * @desc    Search products by name/description
- * @route   GET /api/products/search
- * @access  Public
- */
-export const searchProducts = asyncHandler(async (req, res, next) => {
-  const { q } = req.query;
-
-  if (!q || q.trim().length < 2) {
-    return next(new AppError("Search query must be at least 2 characters long", 400));
-  }
-
-  const sanitizedQuery = validator.escape(q.trim());
-  
-  if (sanitizedQuery.length < 2) {
-    return next(new AppError("Search query must be at least 2 characters long", 400));
-  }
-
-  const products = await Product.find({
-    $text: { $search: sanitizedQuery },
-    isActive: true
-  })
-    .select('name category brand finalPrice images ratings')
-    .limit(50)
-    .lean();
-
-  res.status(200).json({
-    success: true,
-    results: products.length,
-    data: products,
-  });
+export const getTopProducts=asyncHandler(async(req,res)=>res.json({success:true,data:(await Product.find({isActive:true}).sort('-ratings.average').limit(8).lean()).map(publicProduct)}));
+export const getFeaturedProducts=asyncHandler(async(req,res)=>res.json({success:true,data:(await Product.find({isActive:true,isFeatured:true}).limit(12).lean()).map(publicProduct)}));
+export const getCategories=asyncHandler(async(req,res)=>res.json({success:true,data:(await Product.distinct('category',{isActive:true})).sort()}));
+export const getBrands=asyncHandler(async(req,res)=>res.json({success:true,data:(await Product.distinct('brand',{isActive:true})).sort()}));
+export const getRelatedProducts=asyncHandler(async(req,res)=>{
+  const product=await Product.findOne({_id:requireId(req.params.id),isActive:true}).lean();
+  if(!product)throw new AppError('Product not found',404);
+  res.json({success:true,data:(await Product.find({isActive:true,category:product.category,_id:{$ne:product._id}}).limit(8).lean()).map(publicProduct)});
 });
-
-/**
- * @desc    Get all unique product categories
- * @route   GET /api/products/categories
- * @access  Public
- */
-export const getCategories = asyncHandler(async (req, res) => {
-  const categories = await Product.distinct("category", { isActive: true });
-
-  res.status(200).json({
-    success: true,
-    data: categories,
-  });
+const reviewRow=row=>({...entity(row),product_id:String(row.product),created_at:row.createdAt,updated_at:row.updatedAt,is_active:row.isActive});
+export const createProductReview=asyncHandler(async(req,res)=>{
+  const productId=requireId(req.params.id);
+  if(!await Product.exists({_id:productId,isActive:true}))throw new AppError('Product not found',404);
+  const {rating,title,comment}=req.body;
+  if(!Number.isInteger(rating)||rating<1||rating>5||typeof title!=='string'||!title.trim()||typeof comment!=='string'||!comment.trim())throw new AppError('Rating, title and comment are required',400);
+  const verifiedPurchase=Boolean(await Order.exists({user:req.user.id,'orderItems.product':productId,isDelivered:true}));
+  const row=await Review.create({user:req.user.id,product:productId,rating,title,comment,verifiedPurchase});
+  res.status(201).json({success:true,data:reviewRow(row)});
 });
-
-/**
- * @desc    Get featured products
- * @route   GET /api/products/featured
- * @access  Public
- */
-export const getFeaturedProducts = asyncHandler(async (req, res) => {
-  const products = await Product.find({ 
-    isFeatured: true, 
-    isActive: true,
-    stock: { $gt: 0 }
-  })
-    .select('name category brand finalPrice images ratings stock')
-    .limit(12)
-    .lean();
-
-  res.status(200).json({
-    success: true,
-    data: products,
-  });
+export const getOwnReview=asyncHandler(async(req,res)=>{
+  const row=await Review.findOne({user:req.user.id,product:requireId(req.params.productId),isActive:true}).lean();
+  res.json({success:true,data:row?{...publicReview(row),productId:String(row.product),isActive:row.isActive}:null});
 });
-
-/**
- * @desc    Get products by category
- * @route   GET /api/products/category/:category
- * @access  Public
- */
-export const getProductsByCategory = asyncHandler(async (req, res, next) => {
-  const category = validator.escape(req.params.category);
-  
-  // Validate category exists in enum
-  const validCategories = Product.schema.path('category').enumValues;
-  if (!validCategories.includes(category)) {
-    return next(new AppError("Invalid category", 400));
-  }
-
-  const products = await Product.find({ 
-    category, 
-    isActive: true 
-  })
-    .select('name category brand finalPrice images ratings stock')
-    .lean();
-
-  res.status(200).json({
-    success: true,
-    count: products.length,
-    data: products,
-  });
+export const updateReview=asyncHandler(async(req,res)=>{
+  const row=await Review.findOne({_id:requireId(req.params.id),user:req.user.id,isActive:true});
+  if(!row)throw new AppError('Review not found',404);
+  for(const key of ['rating','title','comment'])if(req.body[key]!==undefined)row[key]=req.body[key];
+  await row.save();res.json({success:true,data:reviewRow(row)});
 });
-
-/**
- * @desc    Protected User Product Controllers
- */
-
-/**
- * @desc    Create product review
- * @route   POST /api/products/:id/reviews
- * @access  Private
- */
-export const createProductReview = asyncHandler(async (req, res, next) => {
-  // Sanitize input
-  req.body = sanitizeInput(req.body, { maxLength: 1000 });
-  
-  logger.info("Create review start", { 
-    productId: req.params.id, 
-    userId: req.user?.id 
-  });
-
-  const { rating, comment, title, media } = req.body;
-
-  // Enhanced input validation
-  if (!rating || !comment || !title) {
-    return next(new AppError("Please provide rating, title and comment", 400));
-  }
-
-  if (rating < 1 || rating > 5) {
-    return next(new AppError("Rating must be between 1 and 5", 400));
-  }
-
-  if (title.length < 5 || title.length > 100) {
-    return next(new AppError("Title must be between 5 and 100 characters", 400));
-  }
-
-  if (comment.length < 10 || comment.length > 1000) {
-    return next(new AppError("Comment must be between 10 and 1000 characters", 400));
-  }
-
-  // Validate media URLs if provided
-  if (media && Array.isArray(media)) {
-    for (const url of media) {
-      if (!validator.isURL(url) || !/\.(jpg|jpeg|png|gif|mp4|webm)$/i.test(url)) {
-        return next(new AppError("Invalid media URL format", 400));
-      }
-    }
-  }
-
-  try {
-    await Product.executeInTransaction(async (session) => {
-      const product = await Product.findById(req.params.id).session(session);
-      if (!product) {
-        throw new AppError("No product found with that ID", 404);
-      }
-
-      // Check for existing review atomically
-      const existingReview = await Review.findOne({
-        user: req.user.id,
-        product: req.params.id,
-        isActive: true
-      }).session(session);
-
-      if (existingReview) {
-        logger.warn("Duplicate review attempt", { 
-          productId: req.params.id, 
-          userId: req.user?.id 
-        });
-        throw new AppError("Product already reviewed", 400);
-      }
-
-      // Check if user purchased the product
-      const hasPurchased = await Order.exists({
-        user: req.user.id,
-        "orderItems.product": req.params.id,
-        isPaid: true,
-      }).session(session);
-
-      // Create new review
-      const review = await Review.create([{
-        user: req.user.id,
-        product: req.params.id,
-        rating: Number(rating),
-        title,
-        comment,
-        verifiedPurchase: !!hasPurchased,
-        media: media || [],
-      }], { session });
-
-      res.status(201).json({
-        success: true,
-        message: "Review added successfully",
-        data: review[0]
-      });
-      
-      logger.info("Review created successfully", { 
-        productId: req.params.id, 
-        reviewId: review[0]._id, 
-        userId: req.user?.id 
-      });
-    });
-  } catch (error) {
-    logger.error("Review creation failed", { 
-      error: error.message, 
-      productId: req.params.id, 
-      userId: req.user?.id,
-      stack: process.env.NODE_ENV === 'development' ? error.stack : undefined
-    });
-    
-    if (error instanceof AppError) {
-      return next(error);
-    }
-    return next(new AppError("Failed to create review", 500));
-  }
-});
-
-export const addToWishlist = asyncHandler(async (req, res, next) => {
-  if (!mongoose.Types.ObjectId.isValid(req.params.id)) {
-    return next(new AppError("Invalid product ID format", 400));
-  }
-
-  try {
-    await Product.executeInTransaction(async (session) => {
-      const product = await Product.findById(req.params.id).session(session);
-      if (!product) {
-        logger.warn("Wishlist add product not found", { 
-          id: req.params.id, 
-          userId: req.user?.id 
-        });
-        throw new AppError("No product found with that ID", 404);
-      }
-
-      await User.findByIdAndUpdate(
-        req.user.id, 
-        { $addToSet: { wishlist: product._id } },
-        { session, new: true }
-      );
-    });
-
-    res.status(200).json({
-      success: true,
-      message: "Product added to wishlist",
-    });
-    
-    logger.info("Wishlist added successfully", { 
-      productId: req.params.id, 
-      userId: req.user?.id 
-    });
-
-  } catch (error) {
-    logger.error("Wishlist add failed", { 
-      error: error.message, 
-      productId: req.params.id, 
-      userId: req.user?.id 
-    });
-    
-    if (error instanceof AppError) {
-      return next(error);
-    }
-    return next(new AppError("Failed to add to wishlist", 500));
-  }
-});
-
-export const removeFromWishlist = asyncHandler(async (req, res, next) => {
-  if (!mongoose.Types.ObjectId.isValid(req.params.id)) {
-    return next(new AppError("Invalid product ID format", 400));
-  }
-
-  try {
-    await Product.executeInTransaction(async (session) => {
-      await User.findByIdAndUpdate(
-        req.user.id, 
-        { $pull: { wishlist: req.params.id } },
-        { session, new: true }
-      );
-    });
-
-    res.status(200).json({
-      success: true,
-      message: "Product removed from wishlist",
-    });
-    
-    logger.info("Wishlist removed successfully", { 
-      productId: req.params.id, 
-      userId: req.user?.id 
-    });
-
-  } catch (error) {
-    logger.error("Wishlist remove failed", { 
-      error: error.message, 
-      productId: req.params.id, 
-      userId: req.user?.id 
-    });
-    return next(new AppError("Failed to remove from wishlist", 500));
-  }
+export const deleteReview=asyncHandler(async(req,res)=>{
+  const row=await Review.findOne({_id:requireId(req.params.id),user:req.user.id,isActive:true});
+  if(!row)throw new AppError('Review not found',404);
+  row.isActive=false;await row.save();res.json({success:true,data:null});
 });

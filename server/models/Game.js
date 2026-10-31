@@ -17,8 +17,8 @@ const gameSchema = new mongoose.Schema(
           type: String,
           enum: {
             values: [
-              "Action", "Adventure", "RPG", "Strategy", "Sports", "Shooter", 
-              "Puzzle", "Racing", "Simulation", "Horror", "Fighting", 
+              "Action", "Adventure", "RPG", "Strategy", "Sports", "Shooter",
+              "Puzzle", "Racing", "Simulation", "Horror", "Fighting",
               "Survival", "MMO", "Platformer", "Sandbox",
             ],
             message: "Genre {VALUE} is not supported"
@@ -153,7 +153,7 @@ gameSchema.index({ metacriticScore: -1 });
 gameSchema.pre("save", async function (next) {
   const Product = mongoose.model("Product");
   const product = await Product.findById(this.product);
-  
+
   if (!product) {
     return next(new AppError("Linked product not found", 400));
   }
@@ -181,8 +181,6 @@ gameSchema.pre(/^find/, function (next) {
       path: "productDetails",
       select: "name category brand finalPrice images ratings",
       options: { lean: true }
-    }).catch(err => {
-      console.error('Population failed:', err.message);
     });
   }
   next();

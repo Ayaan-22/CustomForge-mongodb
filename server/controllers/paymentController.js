@@ -1,890 +1,118 @@
-// File: server/controllers/paymentController.js
-import mongoose from "mongoose";
-import Order from "../models/Order.js";
-import User from "../models/User.js";
-import asyncHandler from "express-async-handler";
-import { logger } from "../middleware/logger.js";
-import Stripe from "stripe";
-import AppError from "../utils/appError.js";
+import mongoose from 'mongoose';
+import {randomUUID} from 'node:crypto';
+import Stripe from 'stripe';
+import asyncHandler from 'express-async-handler';
+import Order from '../models/Order.js';
+import Product from '../models/Product.js';
+import AppError from '../utils/appError.js';
+import {requireId} from '../utils/serialize.js';
+import {releaseOrder} from './orderController.js';
+import {logger} from '../middleware/logger.js';
 
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
-
-// Payment configuration
-const PAYMENT_CONFIG = {
-  CURRENCY: "usd",
-  WEBHOOK_TOLERANCE: 300, // 5 minutes for timestamp validation
-  MAX_PAYMENT_AMOUNT: 1000000, // $10,000 max
-  PAYMENT_INTENT_MAX_AGE_MS: 24 * 60 * 60 * 1000, // 24 hours
-};
-
-// Stripe webhook IPs for validation (update from Stripe documentation)
-const STRIPE_WEBHOOK_IPS = [
-  '3.18.12.63', '3.130.192.231', '13.235.14.237',
-  '13.235.122.149', '18.211.135.69', '35.154.171.200',
-  '52.15.183.38', '54.187.174.169', '54.187.205.235',
-  '54.187.216.72'
-];
-
-/* ----------------------- Helper Functions ----------------------- */
-
-/**
- * Sanitize metadata for Stripe
- */
-function sanitizeMetadata(obj) {
-  const sanitized = {};
-  for (const [key, value] of Object.entries(obj)) {
-    if (value !== null && value !== undefined) {
-      sanitized[key] = String(value)
-        .replace(/[^\w\s@.-]/g, '')
-        .trim()
-        .slice(0, 500);
+let stripe;
+export function getStripe(){
+  if(!process.env.STRIPE_SECRET_KEY)throw new AppError('Stripe is not configured. Use cash on delivery.',503);
+  stripe ||= new Stripe(process.env.STRIPE_SECRET_KEY,{timeout:15000,maxNetworkRetries:1});return stripe;
+}
+export function verifySession(session,order){
+  const attempt=order.stripeAttempt;
+  if(!attempt?.attemptId||session.mode!=='payment'||session.metadata?.orderId!==String(order._id)||session.metadata?.userId!==String(order.user)
+    ||session.metadata?.attemptId!==attempt.attemptId||session.currency!=='usd'||session.amount_total!==Math.round(order.totalPrice*100)
+    ||(attempt.sessionId&&session.id!==attempt.sessionId))throw new AppError('Payment does not match its order reservation',409);
+  return session;
+}
+export const createStripeSession=asyncHandler(async(req,res)=>{
+  const provider=getStripe(),orderId=requireId(req.body.orderId);
+  let order=await Order.findOne({_id:orderId,user:req.user.id});
+  if(!order)throw new AppError('Order not found',404);
+  if(order.paymentMethod!=='stripe'||order.isPaid||order.status!=='pending')throw new AppError('Order is not awaiting a Stripe payment',409);
+  if(!order.stripeAttempt?.attemptId){
+    if(!order.paymentExpiresAt||order.paymentExpiresAt.getTime()-Date.now()<31*60000)throw new AppError('The payment window has expired. Cancel this order and check out again.',409);
+    order=await Order.findOneAndUpdate({_id:orderId,user:req.user.id,status:'pending',isPaid:false,'stripeAttempt.attemptId':{$exists:false}},
+      {$set:{stripeAttempt:{attemptId:randomUUID(),createdAt:new Date()}}},{new:true})||await Order.findById(orderId);
+  }
+  if(order.status!=='pending'||order.isPaid)throw new AppError('Order is no longer awaiting payment',409);
+  let session;
+  if(order.stripeAttempt.sessionId)session=await provider.checkout.sessions.retrieve(order.stripeAttempt.sessionId);
+  else {
+    if(order.paymentExpiresAt.getTime()-Date.now()<31*60000)throw new AppError('Payment reservation requires reconciliation. Check your order history shortly.',409);
+    const origin=(process.env.CLIENT_URL||'http://localhost:3000').replace(/\/$/,'');
+    const metadata={orderId:String(order._id),userId:String(order.user),attemptId:order.stripeAttempt.attemptId};
+    session=await provider.checkout.sessions.create({mode:'payment',payment_method_types:['card'],
+      line_items:[{price_data:{currency:'usd',product_data:{name:`CustomForge order ${order._id}`},unit_amount:Math.round(order.totalPrice*100)},quantity:1}],
+      success_url:`${origin}/orders/${order._id}?success=true`,cancel_url:`${origin}/orders/${order._id}?canceled=true`,
+      expires_at:Math.floor(order.paymentExpiresAt.getTime()/1000),metadata,payment_intent_data:{metadata}},
+    {idempotencyKey:`customforge-checkout-${order.stripeAttempt.attemptId}`});
+  }
+  verifySession(session,order);
+  const written=await Order.updateOne({_id:order._id,status:'pending',isPaid:false,'stripeAttempt.attemptId':order.stripeAttempt.attemptId},
+    {$set:{'stripeAttempt.sessionId':session.id,'stripeAttempt.checkoutUrl':session.url}});
+  if(!written.matchedCount)throw new AppError('Payment state changed. Check your order history.',409);
+  if(session.status!=='open'||!session.url)throw new AppError('Payment session is no longer open. Check your order status.',409);
+  res.json({success:true,data:{sessionId:session.id,url:session.url}});
+});
+export async function settleSession(session){
+  const orderId=requireId(session.metadata?.orderId);
+  return mongoose.connection.transaction(async transaction=>{
+    const order=await Order.findById(orderId).session(transaction);
+    if(!order)throw new AppError('Payment order not found',409);
+    verifySession(session,order);
+    if(session.payment_status!=='paid')return order;
+    if(order.isPaid)return order;
+    if(order.status!=='pending'){
+      order.status='payment_review';order.paymentResult={id:session.id,status:'requires_reconciliation'};
+      await order.save({session:transaction});return order;
     }
-  }
-  return sanitized;
-}
-
-/**
- * Validate order ownership
- */
-function validatePaymentAuthorization(order, userId, userRole) {
-  const orderUserId = String(order.user._id || order.user);
-  const requestUserId = String(userId);
-
-  if (orderUserId !== requestUserId && userRole !== "admin") {
-    throw new AppError("Not authorized to process payment for this order", 403);
-  }
-}
-
-/**
- * Validate payment amount matches order
- */
-function validatePaymentAmount(paidAmount, orderTotal, tolerance = 0.01) {
-  const difference = Math.abs(paidAmount - orderTotal);
-  if (difference > tolerance) {
-    throw new AppError(
-      `Payment amount (${paidAmount}) does not match order total (${orderTotal})`,
-      400
-    );
-  }
-}
-
-/**
- * Validate webhook IP address
- */
-function isValidWebhookIP(ip) {
-  if (process.env.NODE_ENV !== 'production') {
-    return true; // Skip in development
-  }
-  
-  // Remove IPv6 prefix if present
-  const cleanIP = ip.replace(/^::ffff:/, '');
-  return STRIPE_WEBHOOK_IPS.includes(cleanIP);
-}
-
-/* ----------------------- Controllers ----------------------- */
-
-/**
- * @desc    Process payment for an order
- * @route   POST /api/payment/process
- * @access  Private
- * @body    { orderId, paymentMethod, paymentData }
- */
-export const processPayment = asyncHandler(async (req, res, next) => {
-  const { orderId, paymentMethod, paymentData } = req.body;
-
-  logger.info("Process payment request", {
-    orderId,
-    paymentMethod,
-    userId: req.user._id
+    order.isPaid=true;order.paidAt=new Date();order.status='paid';
+    order.stripeAttempt.sessionId=session.id;order.stripeAttempt.paymentIntentId=typeof session.payment_intent==='string'?session.payment_intent:session.payment_intent?.id;
+    order.paymentResult={id:session.id,status:'succeeded',method:'stripe'};
+    await order.save({session:transaction});
+    for(const item of order.orderItems)await Product.updateOne({_id:item.product},{$inc:{salesCount:item.quantity}},{session:transaction});
+    return order;
   });
-
-  // Validate inputs
-  if (!orderId || !mongoose.Types.ObjectId.isValid(orderId)) {
-    throw new AppError("Valid order ID is required", 400);
-  }
-
-  if (!paymentMethod || !["stripe", "paypal", "cod"].includes(paymentMethod)) {
-    throw new AppError("Valid payment method is required", 400);
-  }
-
-  // Start transaction
-  const session = await mongoose.startSession();
-  session.startTransaction();
-
-  try {
-    // Validate order exists and belongs to user
-    const order = await Order.findById(orderId).session(session);
-    
-    if (!order) {
-      throw new AppError("Order not found", 404);
-    }
-
-    validatePaymentAuthorization(order, req.user._id, req.user.role);
-
-    if (order.isPaid) {
-      throw new AppError("Order is already paid", 400);
-    }
-
-    if (order.status === "cancelled" || order.status === "refunded") {
-      throw new AppError("Cannot pay for cancelled or refunded order", 400);
-    }
-
-    // Process payment based on method
-    let paymentResult;
-    switch (paymentMethod) {
-      case "stripe":
-        paymentResult = await processStripePayment(order, paymentData, req.user);
-        break;
-      case "paypal":
-        paymentResult = await processPayPalPayment(order, paymentData);
-        break;
-      case "cod":
-        paymentResult = await processCODPayment(order);
-        break;
-      default:
-        throw new AppError("Invalid payment method", 400);
-    }
-
-    // Mark order as paid
-    await order.markAsPaid(paymentResult, session);
-
-    // Commit transaction
-    await session.commitTransaction();
-
-    logger.info("Payment processed successfully", {
-      orderId: order._id,
-      paymentMethod,
-      userId: req.user._id
-    });
-
-    res.status(200).json({
-      success: true,
-      message: "Payment processed successfully",
-      data: order,
-    });
-
-  } catch (error) {
-    await session.abortTransaction();
-    logger.error("Payment processing failed", {
-      orderId,
-      error: error.message,
-      userId: req.user._id
-    });
-    throw error;
-  } finally {
-    session.endSession();
-  }
-});
-
-/**
- * Stripe Payment Processor with enhanced verification
- */
-async function processStripePayment(order, paymentData, user) {
-  if (!paymentData || !paymentData.paymentIntentId) {
-    throw new AppError("Stripe payment intent ID is required", 400);
-  }
-
-  try {
-    // Retrieve payment intent from Stripe
-    const paymentIntent = await stripe.paymentIntents.retrieve(
-      paymentData.paymentIntentId
-    );
-
-    // Verify payment intent status
-    if (paymentIntent.status !== "succeeded") {
-      throw new AppError(
-        `Payment not completed. Status: ${paymentIntent.status}`,
-        400
-      );
-    }
-
-    // Verify payment intent belongs to this order
-    if (
-      !paymentIntent.metadata ||
-      paymentIntent.metadata.orderId !== String(order._id)
-    ) {
-      throw new AppError("Payment intent does not match this order", 400);
-    }
-
-    // Verify customer matches
-    const customerMetadata = paymentIntent.metadata.userId;
-    if (customerMetadata && customerMetadata !== String(user._id)) {
-      throw new AppError("Payment intent customer mismatch", 400);
-    }
-
-    // Verify payment amount
-    const paidAmount = paymentIntent.amount_received / 100;
-    validatePaymentAmount(paidAmount, order.totalPrice);
-
-    // Verify payment is recent (prevent old payment reuse)
-    const paymentCreatedAt = new Date(paymentIntent.created * 1000);
-    const timeDiff = Date.now() - paymentCreatedAt.getTime();
-
-    if (timeDiff > PAYMENT_CONFIG.PAYMENT_INTENT_MAX_AGE_MS) {
-      logger.warn("Old payment intent used", {
-        paymentIntentId: paymentIntent.id,
-        createdAt: paymentCreatedAt,
-        orderId: order._id,
-        ageDays: timeDiff / (24 * 60 * 60 * 1000)
-      });
-    }
-
-    return {
-      id: paymentIntent.id,
-      status: "succeeded",
-      update_time: new Date().toISOString(),
-      email_address: paymentIntent.receipt_email || user.email,
-      payment_method: "stripe",
-      transaction_id: paymentIntent.id
-    };
-
-  } catch (error) {
-    if (error instanceof AppError) throw error;
-    
-    logger.error("Stripe payment processing error", {
-      error: error.message,
-      orderId: order._id
-    });
-    throw new AppError(`Stripe payment failed: ${error.message}`, 400);
-  }
 }
-
-/**
- * PayPal Payment Processor with validation
- */
-async function processPayPalPayment(order, paymentData) {
-  if (!paymentData || !paymentData.id) {
-    throw new AppError("PayPal payment ID is required", 400);
-  }
-
-  if (!paymentData.status || paymentData.status !== "COMPLETED") {
-    throw new AppError("PayPal payment not completed", 400);
-  }
-
-  if (!paymentData.payer || !paymentData.payer.email_address) {
-    throw new AppError("PayPal payment data incomplete", 400);
-  }
-
-  // In production, verify this payment with PayPal API
-  // For now, we trust the client data with basic validation
-
-  return {
-    id: paymentData.id,
-    status: "succeeded",
-    update_time: paymentData.update_time || new Date().toISOString(),
-    email_address: paymentData.payer.email_address,
-    payment_method: "paypal",
-    transaction_id: paymentData.id
-  };
-}
-
-/**
- * Cash on Delivery Processor
- */
-async function processCODPayment(order) {
-  // COD orders are marked as processing but not paid until delivery
-  return {
-    id: `COD_${order._id}`,
-    status: "pending",
-    update_time: new Date().toISOString(),
-    email_address: null,
-    payment_method: "cod"
-  };
-}
-
-/**
- * @desc    Create Stripe Payment Intent
- * @route   POST /api/payment/create-intent
- * @access  Private
- * @body    { orderId }
- */
-export const createPaymentIntent = asyncHandler(async (req, res, next) => {
-  const { orderId } = req.body;
-
-  if (!orderId || !mongoose.Types.ObjectId.isValid(orderId)) {
-    throw new AppError("Valid order ID is required", 400);
-  }
-
-  const order = await Order.findById(orderId);
-  
-  if (!order) {
-    throw new AppError("Order not found", 404);
-  }
-
-  // Authorization check
-  validatePaymentAuthorization(order, req.user._id, req.user.role);
-
-  if (order.isPaid) {
-    throw new AppError("Order is already paid", 400);
-  }
-
-  if (order.status === "cancelled" || order.status === "refunded") {
-    throw new AppError("Cannot create payment for cancelled or refunded order", 400);
-  }
-
-  // Validate order amount
-  if (order.totalPrice <= 0 || order.totalPrice > PAYMENT_CONFIG.MAX_PAYMENT_AMOUNT) {
-    throw new AppError("Invalid order amount", 400);
-  }
-
-  try {
-    // Get or create Stripe customer
-    let customerId = req.user.stripeCustomerId;
-    
-    if (!customerId) {
-      const customer = await stripe.customers.create({
-        email: req.user.email,
-        name: req.user.name,
-        metadata: sanitizeMetadata({ 
-          userId: String(req.user._id)
-        }),
-      });
-      customerId = customer.id;
-      
-      // Save customer ID to user
-      await User.findByIdAndUpdate(req.user._id, {
-        stripeCustomerId: customerId,
-      });
-    }
-
-    // Sanitize all metadata
-    const metadata = sanitizeMetadata({
-      orderId: String(order._id),
-      orderNumber: order.orderNumber || '',
-      userId: String(req.user._id),
-      userEmail: req.user.email || ''
-    });
-
-    // Create payment intent
-    const paymentIntent = await stripe.paymentIntents.create({
-      amount: Math.round(order.totalPrice * 100),
-      currency: PAYMENT_CONFIG.CURRENCY,
-      customer: customerId,
-      metadata,
-      description: `Payment for Order #${order.orderNumber || order._id}`,
-      shipping: order.shippingAddress
-        ? {
-            name: String(order.shippingAddress.fullName).slice(0, 100),
-            address: {
-              line1: String(order.shippingAddress.address).slice(0, 200),
-              city: String(order.shippingAddress.city).slice(0, 100),
-              state: String(order.shippingAddress.state).slice(0, 100),
-              postal_code: String(order.shippingAddress.postalCode).slice(0, 20),
-              country: String(order.shippingAddress.country || "US").slice(0, 2),
-            },
-            phone: order.shippingAddress.phone 
-              ? String(order.shippingAddress.phone).slice(0, 20) 
-              : undefined
-          }
-        : undefined,
-      receipt_email: req.user.email
-    });
-
-    logger.info("Payment intent created", {
-      orderId: order._id,
-      paymentIntentId: paymentIntent.id,
-      amount: order.totalPrice
-    });
-
-    res.status(200).json({
-      success: true,
-      clientSecret: paymentIntent.client_secret,
-      paymentIntentId: paymentIntent.id,
-    });
-
-  } catch (error) {
-    logger.error("Payment intent creation failed", {
-      orderId: order._id,
-      error: error.message
-    });
-    throw new AppError(`Failed to create payment intent: ${error.message}`, 500);
-  }
-});
-
-/**
- * @desc    Stripe Webhook Handler with replay protection
- * @route   POST /api/payment/webhook
- * @access  Public (Stripe)
- */
-export const handleWebhook = asyncHandler(async (req, res, next) => {
-  const sig = req.headers["stripe-signature"];
-
-  if (!sig) {
-    logger.error("Webhook signature missing");
-    throw new AppError("Webhook signature required", 400);
-  }
-
-  // Validate IP address in production
-  const clientIP = req.ip || req.connection.remoteAddress;
-  if (!isValidWebhookIP(clientIP)) {
-    logger.warn("Webhook from unauthorized IP", { ip: clientIP });
-    return res.status(403).json({ error: "Unauthorized IP" });
-  }
-
+export const handleWebhook=asyncHandler(async(req,res)=>{
+  const provider=getStripe();
+  if(!process.env.STRIPE_WEBHOOK_SECRET)throw new AppError('Stripe webhooks are not configured',503);
   let event;
-
-  try {
-    // Verify webhook signature
-    event = stripe.webhooks.constructEvent(
-      req.body,
-      sig,
-      process.env.STRIPE_WEBHOOK_SECRET
-    );
-  } catch (err) {
-    logger.error("Webhook signature verification failed", {
-      error: err.message
-    });
-    throw new AppError(`Webhook Error: ${err.message}`, 400);
-  }
-
-  // Validate event timestamp to prevent replay attacks
-  const eventTimestamp = event.created;
-  const currentTimestamp = Math.floor(Date.now() / 1000);
-  
-  if (currentTimestamp - eventTimestamp > PAYMENT_CONFIG.WEBHOOK_TOLERANCE) {
-    logger.warn("Old webhook event ignored", {
-      eventId: event.id,
-      eventType: event.type,
-      age: currentTimestamp - eventTimestamp
-    });
-    return res.json({ received: true, ignored: true });
-  }
-
-  logger.info("Webhook event received", {
-    eventId: event.id,
-    eventType: event.type
-  });
-
-  try {
-    switch (event.type) {
-      case "payment_intent.succeeded":
-        await handleSuccessfulPayment(event.data.object);
-        break;
-
-      case "payment_intent.payment_failed":
-        await handleFailedPayment(event.data.object);
-        break;
-
-      case "charge.refunded":
-        await handleRefund(event.data.object);
-        break;
-
-      case "payment_intent.canceled":
-        logger.info("Payment intent cancelled", {
-          paymentIntentId: event.data.object.id
-        });
-        break;
-
-      default:
-        logger.info("Unhandled webhook event type", { 
-          type: event.type,
-          eventId: event.id
-        });
+  try{event=provider.webhooks.constructEvent(req.body,req.headers['stripe-signature'],process.env.STRIPE_WEBHOOK_SECRET);}catch{throw new AppError('Invalid webhook signature',400);}
+  if(['checkout.session.completed','checkout.session.async_payment_succeeded','checkout.session.expired'].includes(event.type)){
+    const incoming=event.data.object;
+    if(incoming.metadata?.orderId){
+      const session=await provider.checkout.sessions.retrieve(incoming.id);
+      if(event.type==='checkout.session.expired'){
+        const order=await Order.findById(requireId(session.metadata.orderId));
+        if(!order)throw new AppError('Payment order not found',409);
+        verifySession(session,order);
+        if(session.payment_status==='paid')await settleSession(session);
+        else if(session.status==='expired')await releaseOrder(String(order._id),{stripeConfirmedExpired:true});
+      }else await settleSession(session);
     }
-
-    res.json({ received: true });
-
-  } catch (err) {
-    logger.error("Webhook processing error", {
-      eventId: event.id,
-      eventType: event.type,
-      error: err.message,
-      stack: err.stack
-    });
-    
-    // Return 200 to acknowledge receipt even if processing fails
-    // Stripe will retry if we return error
-    res.json({ received: true, error: err.message });
   }
+  res.json({received:true});
 });
-
-/**
- * Handle successful payment webhook
- */
-async function handleSuccessfulPayment(paymentIntent) {
-  if (!paymentIntent || !paymentIntent.metadata || !paymentIntent.metadata.orderId) {
-    logger.error("Invalid payment intent metadata", { paymentIntent });
-    return;
-  }
-
-  const orderId = paymentIntent.metadata.orderId;
-
-  // Start transaction
-  const session = await mongoose.startSession();
-  session.startTransaction();
-
-  try {
-    const order = await Order.findById(orderId).session(session);
-
-    if (!order) {
-      logger.error("Order not found for successful payment", { orderId });
-      await session.abortTransaction();
-      return;
-    }
-
-    // Idempotency: if order already paid, skip
-    if (order.isPaid) {
-      logger.info("Order already marked as paid", { orderId });
-      await session.abortTransaction();
-      return;
-    }
-
-    // Verify payment amount
-    const paidAmount = paymentIntent.amount_received / 100;
-    validatePaymentAmount(paidAmount, order.totalPrice);
-
-    // Mark order as paid
-    await order.markAsPaid(
-      {
-        id: paymentIntent.id,
-        status: "succeeded",
-        update_time: new Date().toISOString(),
-        email_address: paymentIntent.receipt_email || paymentIntent.metadata.userEmail,
-        payment_method: "stripe",
-        transaction_id: paymentIntent.id
-      },
-      session
-    );
-
-    await session.commitTransaction();
-
-    logger.info("Payment webhook processed successfully", {
-      orderId,
-      paymentIntentId: paymentIntent.id
-    });
-
-  } catch (error) {
-    await session.abortTransaction();
-    logger.error("Payment webhook processing failed", {
-      orderId,
-      error: error.message
-    });
-    throw error;
-  } finally {
-    session.endSession();
-  }
-}
-
-/**
- * Handle failed payment webhook
- */
-async function handleFailedPayment(paymentIntent) {
-  logger.warn("Payment failed", {
-    paymentIntentId: paymentIntent.id,
-    orderId: paymentIntent.metadata?.orderId,
-    error: paymentIntent.last_payment_error?.message
-  });
-
-  // Could add logic to notify user or update order status
-}
-
-/**
- * Handle refund webhook
- */
-async function handleRefund(refundedCharge) {
-  if (!refundedCharge.metadata || !refundedCharge.metadata.orderId) {
-    logger.warn("Refund webhook missing order metadata", {
-      chargeId: refundedCharge.id
-    });
-    return;
-  }
-
-  const orderId = refundedCharge.metadata.orderId;
-
-  // Start transaction
-  const session = await mongoose.startSession();
-  session.startTransaction();
-
-  try {
-    const order = await Order.findById(orderId).session(session);
-
-    if (!order) {
-      logger.error("Order not found for refund", { orderId });
-      await session.abortTransaction();
-      return;
-    }
-
-    // Idempotency: if already refunded, skip
-    if (order.isRefunded) {
-      logger.info("Order already marked as refunded", { orderId });
-      await session.abortTransaction();
-      return;
-    }
-
-    const refundAmount = refundedCharge.amount_refunded / 100;
-
-    await order.markAsRefunded(
-      {
-        refundId: refundedCharge.refund,
-        amount: refundAmount,
-        reason: "Stripe refund processed"
-      },
-      session
-    );
-
-    await session.commitTransaction();
-
-    logger.info("Refund webhook processed successfully", {
-      orderId,
-      chargeId: refundedCharge.id,
-      refundAmount
-    });
-
-  } catch (error) {
-    await session.abortTransaction();
-    logger.error("Refund webhook processing failed", {
-      orderId,
-      error: error.message
-    });
-    throw error;
-  } finally {
-    session.endSession();
-  }
-}
-
-/**
- * @desc    Process actual Stripe refund
- * @route   POST /api/payment/refund
- * @access  Private (Admin only)
- * @body    { orderId, amount?, reason? }
- */
-export const processRefund = asyncHandler(async (req, res, next) => {
-  const { orderId, amount, reason } = req.body;
-
-  // Only admins can process refunds
-  if (req.user.role !== "admin") {
-    throw new AppError("Only administrators can process refunds", 403);
-  }
-
-  if (!orderId || !mongoose.Types.ObjectId.isValid(orderId)) {
-    throw new AppError("Valid order ID is required", 400);
-  }
-
-  // Start transaction
-  const session = await mongoose.startSession();
-  session.startTransaction();
-
-  try {
-    const order = await Order.findById(orderId).session(session);
-
-    if (!order) {
-      throw new AppError("Order not found", 404);
-    }
-
-    if (order.isRefunded) {
-      throw new AppError("Order is already refunded", 400);
-    }
-
-    if (!order.isPaid) {
-      throw new AppError("Cannot refund unpaid order", 400);
-    }
-
-    if (order.paymentMethod === "cod") {
-      throw new AppError("COD orders cannot be refunded through this endpoint", 400);
-    }
-
-    if (!order.paymentResult || !order.paymentResult.id) {
-      throw new AppError("Payment information not found for this order", 400);
-    }
-
-    // Determine refund amount
-    const refundAmount = amount && amount > 0 
-      ? Math.min(amount, order.totalPrice)
-      : order.totalPrice;
-
-    if (refundAmount <= 0) {
-      throw new AppError("Invalid refund amount", 400);
-    }
-
-    // Process Stripe refund
-    let stripeRefund;
-    try {
-      stripeRefund = await stripe.refunds.create({
-        payment_intent: order.paymentResult.id,
-        amount: Math.round(refundAmount * 100),
-        reason: reason || "requested_by_customer",
-        metadata: sanitizeMetadata({
-          orderId: String(order._id),
-          orderNumber: order.orderNumber || ''
-        })
-      });
-    } catch (stripeError) {
-      logger.error("Stripe refund failed", {
-        orderId: order._id,
-        error: stripeError.message
-      });
-      throw new AppError(`Stripe refund failed: ${stripeError.message}`, 500);
-    }
-
-    // Mark order as refunded and restore stock
-    await order.markAsRefunded(
-      {
-        refundId: stripeRefund.id,
-        amount: refundAmount,
-        reason: reason || "Admin processed refund",
-        userId: req.user._id
-      },
-      session
-    );
-
-    await session.commitTransaction();
-
-    logger.info("Refund processed successfully", {
-      orderId: order._id,
-      refundAmount,
-      stripeRefundId: stripeRefund.id
-    });
-
-    res.status(200).json({
-      success: true,
-      message: "Refund processed successfully",
-      data: {
-        order,
-        refund: {
-          id: stripeRefund.id,
-          amount: refundAmount,
-          status: stripeRefund.status
-        }
+export async function recoverStripeReservations(){
+  const orders=await Order.find({paymentMethod:'stripe',status:'pending',isPaid:false,paymentExpiresAt:{$lt:new Date(Date.now()-5*60000)}}).sort('paymentExpiresAt').limit(20);
+  for(const order of orders)try{
+    if(!order.stripeAttempt?.attemptId){await releaseOrder(String(order._id));continue;}
+    const provider=getStripe();let sessions=[];
+    if(order.stripeAttempt.sessionId)sessions=[await provider.checkout.sessions.retrieve(order.stripeAttempt.sessionId)];
+    else {
+      let after,complete=false;
+      for(let page=0;page<20;page++){
+        const result=await provider.checkout.sessions.list({created:{gte:Math.floor(order.stripeAttempt.createdAt.getTime()/1000)-60},limit:100,...(after?{starting_after:after}:{})});
+        sessions.push(...result.data.filter(row=>row.metadata?.orderId===String(order._id)));
+        if(!result.has_more){complete=true;break;}after=result.data.at(-1)?.id;
       }
-    });
-
-  } catch (error) {
-    await session.abortTransaction();
-    throw error;
-  } finally {
-    session.endSession();
-  }
-});
-
-/**
- * @desc    Save payment method for user
- * @route   POST /api/payment/save-payment-method
- * @access  Private
- * @body    { paymentMethodId }
- */
-export const savePaymentMethod = asyncHandler(async (req, res, next) => {
-  const { paymentMethodId } = req.body;
-
-  if (!paymentMethodId || typeof paymentMethodId !== "string") {
-    throw new AppError("Valid payment method ID is required", 400);
-  }
-
-  if (!req.user.stripeCustomerId) {
-    throw new AppError("No Stripe customer associated with this account", 400);
-  }
-
-  try {
-    // Attach payment method to customer
-    const paymentMethod = await stripe.paymentMethods.attach(paymentMethodId, {
-      customer: req.user.stripeCustomerId,
-    });
-
-    // Get customer details
-    const customer = await stripe.customers.retrieve(req.user.stripeCustomerId);
-
-    // Set as default if no default exists
-    if (!customer.invoice_settings?.default_payment_method) {
-      await stripe.customers.update(req.user.stripeCustomerId, {
-        invoice_settings: {
-          default_payment_method: paymentMethod.id,
-        },
-      });
+      if(!complete)throw new Error('Stripe discovery is incomplete');
     }
-
-    // Save to user record
-    await User.findByIdAndUpdate(req.user._id, {
-      $addToSet: { paymentMethods: paymentMethod.id },
-    });
-
-    logger.info("Payment method saved", {
-      userId: req.user._id,
-      paymentMethodId: paymentMethod.id
-    });
-
-    res.status(200).json({
-      success: true,
-      message: "Payment method saved successfully",
-      data: paymentMethod,
-    });
-
-  } catch (error) {
-    logger.error("Save payment method failed", {
-      userId: req.user._id,
-      error: error.message
-    });
-    throw new AppError(`Failed to save payment method: ${error.message}`, 500);
-  }
-});
-
-/**
- * @desc    Get user's saved payment methods
- * @route   GET /api/payment/payment-methods
- * @access  Private
- */
-export const getPaymentMethods = asyncHandler(async (req, res) => {
-  if (!req.user.stripeCustomerId) {
-    return res.status(200).json({ 
-      success: true, 
-      data: [] 
-    });
-  }
-
-  try {
-    const paymentMethods = await stripe.paymentMethods.list({
-      customer: req.user.stripeCustomerId,
-      type: "card",
-    });
-
-    res.status(200).json({
-      success: true,
-      data: paymentMethods.data,
-    });
-
-  } catch (error) {
-    logger.error("Get payment methods failed", {
-      userId: req.user._id,
-      error: error.message
-    });
-    throw new AppError("Failed to retrieve payment methods", 500);
-  }
-});
-
-/**
- * @desc    Remove saved payment method
- * @route   DELETE /api/payment/payment-methods/:paymentMethodId
- * @access  Private
- */
-export const removePaymentMethod = asyncHandler(async (req, res) => {
-  const { paymentMethodId } = req.params;
-
-  if (!paymentMethodId) {
-    throw new AppError("Payment method ID is required", 400);
-  }
-
-  try {
-    // Detach from Stripe
-    await stripe.paymentMethods.detach(paymentMethodId);
-
-    // Remove from user record
-    await User.findByIdAndUpdate(req.user._id, {
-      $pull: { paymentMethods: paymentMethodId },
-    });
-
-    logger.info("Payment method removed", {
-      userId: req.user._id,
-      paymentMethodId
-    });
-
-    res.status(200).json({
-      success: true,
-      message: "Payment method removed successfully",
-    });
-
-  } catch (error) {
-    logger.error("Remove payment method failed", {
-      userId: req.user._id,
-      error: error.message
-    });
-    throw new AppError("Failed to remove payment method", 500);
-  }
-});
+    for(const session of sessions)verifySession(session,order);
+    if(sessions.some(session=>session.payment_status==='paid')){await settleSession(sessions.find(session=>session.payment_status==='paid'));continue;}
+    for(const session of sessions)if(session.status==='open')await provider.checkout.sessions.expire(session.id);
+    if(sessions.some(session=>session.status==='complete'))continue;
+    await releaseOrder(String(order._id),{stripeConfirmedExpired:true});
+  }catch(error){logger.warn('Stripe reservation retained for reconciliation',{orderId:String(order._id),message:error.message});}
+}
+export const getPaymentMethods=asyncHandler(async(req,res)=>res.json({success:true,data:[]}));
+export const unavailable=(req,res,next)=>next(new AppError('This payment operation is unavailable. Use Stripe Checkout or cash on delivery.',503));
+export const paymentCapabilities=(req,res)=>res.json({success:true,data:{cod:true,stripe:Boolean(process.env.STRIPE_SECRET_KEY&&process.env.STRIPE_WEBHOOK_SECRET),savedCards:false,paypal:false}});
