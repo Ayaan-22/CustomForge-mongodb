@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import {
   hasInvoicePricing,
   orderActionEligibility,
+  orderReturnMessage,
   recordedLineTotal,
   recordedOrderAmount,
   recordedOrderDate,
@@ -39,7 +40,7 @@ describe("server-recorded order detail presentation", () => {
       }).canCancel,
     ).toBe(false);
   });
-  it("keeps return eligibility tied only to the delivered server status", () => {
+  it("offers a first return only for delivered orders", () => {
     expect(
       orderActionEligibility({
         status: "delivered",
@@ -61,6 +62,17 @@ describe("server-recorded order detail presentation", () => {
         paymentMethod: "cod",
       }).canReturn,
     ).toBe(false);
+  });
+  it.each(['requested', 'approved', 'rejected', 'completed', 'unknown'])('prevents a duplicate return when its recorded state is %s', (returnStatus) => {
+    expect(orderActionEligibility({status:'delivered',isPaid:true,paymentMethod:'cod',returnStatus}).canReturn).toBe(false);
+    expect(orderReturnMessage(returnStatus)).toBeTruthy();
+  });
+  it('shows recorded return progress without promising a refund', () => {
+    expect(orderReturnMessage('none')).toBeNull();
+    expect(orderReturnMessage(undefined)).toBeNull();
+    expect(orderReturnMessage('requested')).toContain('awaiting review');
+    expect(orderReturnMessage('approved')).toContain('A refund has not been confirmed');
+    expect(orderActionEligibility({status:'delivered',isPaid:true,returnStatus:'none'}).canReturn).toBe(true);
   });
   it("distinguishes known zero from missing, nonfinite or negative values", () => {
     expect(recordedOrderAmount(0)).toBe(true);

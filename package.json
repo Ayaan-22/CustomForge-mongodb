@@ -5,6 +5,7 @@
   "scripts": {
     "setup": "node scripts/setup.mjs",
     "dev": "node scripts/dev.mjs --local",
+    "dev:verify": "node scripts/dev.mjs --isolated",
     "dev:configured": "node scripts/dev.mjs --configured",
     "test": "node scripts/check.mjs test",
     "build": "node scripts/check.mjs build",

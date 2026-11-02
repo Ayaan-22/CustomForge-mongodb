@@ -36,6 +36,7 @@ import {
 import {
   hasInvoicePricing,
   orderActionEligibility,
+  orderReturnMessage,
   orderNeedsPaymentReview,
   recordedLineTotal,
   recordedOrderAmount,
@@ -191,8 +192,8 @@ export default function OrderDetailsPage() {
     );
   }
 
-  // These conditions exactly preserve existing cancellation/return eligibility.
   const { canCancel, canReturn } = orderActionEligibility(order);
+  const returnMessage = orderReturnMessage(order.returnStatus);
   const placedDate = recordedOrderDate(order.createdAt);
   const displayOrder = {
     ...order,
@@ -392,7 +393,7 @@ export default function OrderDetailsPage() {
             )}
           </section>
 
-          {(canCancel || canReturn) && (
+          {(canCancel || canReturn || returnMessage) && (
             <section
               className="forge-order-detail-card forge-order-actions"
               aria-labelledby="order-actions-heading"
@@ -401,9 +402,9 @@ export default function OrderDetailsPage() {
                 <h2 id="order-actions-heading">Manage this order</h2>
               </header>
               <p>
-                {canCancel
+                {returnMessage || (canCancel
                   ? "Cancellation is offered for this pending, unpaid cash-on-delivery order. The server confirms the final result."
-                  : "A return request is available for the delivered order. The server checks eligibility and records the request."}
+                  : "A return request is available for the delivered order. The server checks eligibility and records the request.")}
               </p>
               <div>
                 {canCancel && (

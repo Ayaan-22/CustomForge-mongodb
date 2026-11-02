@@ -4,17 +4,29 @@ export function orderNeedsPaymentReview(order: Pick<Order, 'status' | 'paymentRe
   return order.status !== 'refunded' && (order.status === 'payment_review' || order.paymentResult?.reconciliationRequired === true);
 }
 
-/** Display eligibility mirrors the existing order actions; the server rechecks it. */
+/** The server rechecks eligibility; recorded returns cannot be requested again. */
 export function orderActionEligibility(
-  order: Pick<Order, "status" | "isPaid" | "paymentMethod" | "paymentResult">,
+  order: Pick<Order, "status" | "isPaid" | "paymentMethod" | "paymentResult" | "returnStatus">,
 ) {
   return {
     canCancel:
       !orderNeedsPaymentReview(order) && order.status === "pending" &&
       !order.isPaid &&
       order.paymentMethod === "cod",
-    canReturn: !orderNeedsPaymentReview(order) && order.status === "delivered",
+    canReturn: !orderNeedsPaymentReview(order) && order.status === "delivered" &&
+      (!order.returnStatus || order.returnStatus === "none"),
   };
+}
+
+export function orderReturnMessage(status: Order['returnStatus']) {
+  if (!status || status === 'none') return null;
+  const messages: Record<string, string> = {
+    requested: 'Your return request is awaiting review.',
+    approved: 'Your return request has been approved. A refund has not been confirmed.',
+    rejected: 'Your return request was declined. Contact the store for more information.',
+    completed: 'Your return has been completed. Contact the store about any refund reconciliation.',
+  };
+  return messages[status] || 'A return is already recorded for this order. Contact the store for its current status.';
 }
 
 export function recordedOrderAmount(value: unknown): value is number {

@@ -7,16 +7,15 @@ import Product from '../models/Product.js';
 import User from '../models/User.js';
 import {demoProducts} from './data/demo-catalog.js';
 
-export async function localCredentials(){
-  const file=new URL('../../.local/demo-access.json',import.meta.url);
+export async function localCredentials(file=new URL('../../.local/demo-access.json',import.meta.url)){
   try{return JSON.parse(await readFile(file,'utf8'));}catch(error){if(error.code!=='ENOENT')throw error;}
   const credentials={adminEmail:'admin@customforge.local',adminPassword:`Forge-${randomBytes(12).toString('base64url')}!`,customerEmail:'customer@customforge.local',customerPassword:`Forge-${randomBytes(12).toString('base64url')}!`};
   await mkdir(new URL('../../.local/',import.meta.url),{recursive:true});await writeFile(file,JSON.stringify(credentials,null,2)+'\n',{flag:'wx',mode:0o600});return credentials;
 }
-export async function seedLocal(uri){
+export async function seedLocal(uri,{credentialsFile}={}){
   const target=new URL(uri);
   if(target.protocol!=='mongodb:'||!['127.0.0.1','localhost'].includes(target.hostname)||target.pathname!=='/customforge_local')throw new Error('Demo seeding is restricted to the local customforge_local database');
-  const credentials=await localCredentials();
+  const credentials=await localCredentials(credentialsFile);
   await connectDB(uri);
   await Promise.all([Product.init(),User.init()]);
   let added=0;

@@ -167,6 +167,27 @@ describe('MongoDB customer and commerce contracts',()=>{
       expect(result.body.data.customerStats).toEqual({totalCustomers:1,newCustomers:1,returningCustomers:0});
     }
   });
+  it('records owned return requests and admin decisions without fabricating refunds',async()=>{
+    const buyer=customer(),other=customer(1),admin=customer(2);await add(buyer);
+    const placed=await checkout(buyer),id=placed.body.data.id;
+    expect((await write(buyer,'post',`/orders/request-return/${id}`)).status).toBe(409);
+    await write(admin,'patch',`/admin/orders/${id}/mark-paid`);
+    await write(admin,'patch',`/admin/orders/${id}/update-status`,{status:'processing'});
+    await write(admin,'patch',`/admin/orders/${id}/update-status`,{status:'shipped'});
+    expect((await write(admin,'patch',`/admin/orders/${id}/mark-delivered`)).status).toBe(200);
+    expect((await write(other,'post',`/orders/request-return/${id}`)).status).toBe(404);
+    const requested=await write(buyer,'post',`/orders/request-return/${id}`);
+    expect(requested.status).toBe(200);expect(requested.body.data.returnStatus).toBe('requested');
+    expect((await write(buyer,'post',`/orders/request-return/${id}`)).status).toBe(409);
+    expect((await write(admin,'patch',`/admin/orders/${id}/approve-return`)).status).toBe(200);
+    const refreshed=await buyer.agent.get(`/api/v1/orders/${id}`).set('Authorization',`Bearer ${buyer.token}`);
+    expect(refreshed.body.data).toMatchObject({returnStatus:'approved',status:'delivered',isPaid:true});
+    expect((await write(admin,'patch',`/admin/orders/${id}/refund`)).status).toBe(503);
+    expect((await Order.findById(id)).status).toBe('delivered');
+    expect((await write(admin,'put',`/admin/orders/${id}/process-return`,{returnStatus:'completed'})).status).toBe(200);
+    const completed=await buyer.agent.get(`/api/v1/orders/${id}`).set('Authorization',`Bearer ${buyer.token}`);
+    expect(completed.body.data).toMatchObject({returnStatus:'completed',status:'returned'});
+  });
   it('serves admin catalog, users, orders and all six analytics contracts',async()=>{
     const admin=customer(2);for(const route of ['products','users','orders','coupons','reviews','analytics/overview','analytics/sales','analytics/products','analytics/users','analytics/orders','analytics/inventory']){
       const response=await admin.agent.get(`/api/v1/admin/${route}`).set('Authorization',`Bearer ${admin.token}`);expect(response.status,route).toBe(200);expect(response.body).toHaveProperty('data');

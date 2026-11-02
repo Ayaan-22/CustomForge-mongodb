@@ -53,6 +53,8 @@ npm run build
 
 The backend integration suite creates an isolated temporary local MongoDB replica set and overrides database, email, payment, and upload credentials. It never uses `MONGO_URI` or `MONGO_TEST_URI` from developer configuration. The suite can download a MongoDB binary unless `MONGOMS_SYSTEM_BINARY` is provided. Windows test runners must allow localhost connections.
 
+For browser verification, run `npm run dev:verify`. Each run creates a fresh local replica set, demo users, session secrets, mailbox, and logs under a new ignored `.local/verification-*` directory. It leaves `.local/mongodb`, existing local credentials, and configured databases untouched. Use storefront `http://localhost:3300`, admin `http://127.0.0.1:3301`, and API `http://localhost:5200/api/v1/health`. Credentials are in the printed run directory's `demo-access.json`. Stop with Ctrl+C.
+
 The native integration tests cover authentication/verification, CSRF, private account data, saved addresses, catalog contracts, wishlist, monetary totals, checkout retries, concurrent stock and coupon limits, cancellation, customer ownership, administrator access, fulfillment, reviews, and mocked Stripe sessions/signed webhooks. Frontend suites cover the retained storefront and admin behavior. Passing mocked Stripe tests does not verify a real merchant account or live settlement.
 
 ## Commerce behavior

@@ -1,13 +1,14 @@
 import {spawn} from 'node:child_process';
-import {mkdir,readFile,writeFile,readdir,access} from 'node:fs/promises';
+import {mkdir,mkdtemp,readFile,writeFile,readdir,access} from 'node:fs/promises';
 import {randomBytes} from 'node:crypto';
 import path from 'node:path';
 import {fileURLToPath} from 'node:url';
 
 const root=fileURLToPath(new URL('../',import.meta.url));
 process.chdir(root);
-const local=process.argv.includes('--local');
-if(!local&&!process.argv.includes('--configured'))throw new Error('Select --local or --configured');
+const isolated=process.argv.includes('--isolated');
+const local=isolated||process.argv.includes('--local');
+if(!local&&!process.argv.includes('--configured'))throw new Error('Select --local, --isolated or --configured');
 const children=[];let database,stopping=false;
 async function stop(code=0){
   if(stopping)return;stopping=true;
@@ -27,21 +28,24 @@ try{
       const versions=await readdir(directory).catch(()=>[]);
       for(const version of versions.sort((a,b)=>b.localeCompare(a,undefined,{numeric:true}))){const candidate=path.join(directory,version,'bin/mongod.exe');try{await access(candidate);binary=candidate;break;}catch{}}
     }
-    const directory=path.join(root,'.local/mongodb');await mkdir(directory,{recursive:true});
+    await mkdir(path.join(root,'.local'),{recursive:true});
+    const runtime=isolated?await mkdtemp(path.join(root,'.local/verification-')):path.join(root,'.local');
+    const directory=path.join(runtime,'mongodb');await mkdir(directory,{recursive:true});
     process.env.MONGOMS_SYSTEM_BINARY_VERSION_CHECK='false';
-    database=await MongoMemoryReplSet.create({binary:{...(binary?{systemBinary:binary}:{})},instanceOpts:[{port:27127,dbPath:directory}],
+    database=await MongoMemoryReplSet.create({binary:{...(binary?{systemBinary:binary}:{})},instanceOpts:[{...(isolated?{}:{port:27127}),dbPath:directory}],
       replSet:{name:'customforge-local',count:1,storageEngine:'wiredTiger',configSettings:{electionTimeoutMillis:10000,heartbeatIntervalMillis:2000}}});
     const uri=database.getUri('customforge_local');
-    const {seedLocal}=await import('../server/scripts/seed.js');await seedLocal(uri);
-    const secretFile=path.join(root,'.local/session-secrets.json');let secrets;
+    const {seedLocal}=await import('../server/scripts/seed.js');await seedLocal(uri,{credentialsFile:path.join(runtime,'demo-access.json')});
+    const secretFile=path.join(runtime,'session-secrets.json');let secrets;
     try{secrets=JSON.parse(await readFile(secretFile,'utf8'));}catch(error){if(error.code!=='ENOENT')throw error;secrets={jwt:randomBytes(48).toString('hex'),csrf:randomBytes(48).toString('hex')};await writeFile(secretFile,JSON.stringify(secrets),{flag:'wx',mode:0o600});}
-    storePort=3200;adminPort=3201;
-    Object.assign(env,{MONGO_URI:uri,NODE_ENV:'development',PORT:'5100',CLIENT_URL:'http://localhost:3200',ADMIN_URL:'http://127.0.0.1:3201',
-      API_BACKEND_URL:'http://localhost:5100',JWT_SECRET:secrets.jwt,CSRF_SECRET:secrets.csrf,
-      EMAIL_MODE:'preview',EMAIL_PREVIEW_DIR:path.join(root,'.local/mailbox'),EMAIL_USERNAME:'',EMAIL_PASSWORD:'',
+    storePort=isolated?3300:3200;adminPort=isolated?3301:3201;
+    const apiPort=isolated?5200:5100;
+    Object.assign(env,{MONGO_URI:uri,NODE_ENV:'development',PORT:String(apiPort),CLIENT_URL:`http://localhost:${storePort}`,ADMIN_URL:`http://127.0.0.1:${adminPort}`,
+      API_BACKEND_URL:`http://localhost:${apiPort}`,JWT_SECRET:secrets.jwt,CSRF_SECRET:secrets.csrf,
+      EMAIL_MODE:'preview',EMAIL_PREVIEW_DIR:path.join(runtime,'mailbox'),EMAIL_USERNAME:'',EMAIL_PASSWORD:'',
       STRIPE_SECRET_KEY:'',STRIPE_WEBHOOK_SECRET:'',CLOUDINARY_CLOUD_NAME:'',CLOUDINARY_API_KEY:'',CLOUDINARY_API_SECRET:'',REDIS_URL:'',
-      LOG_DIR:path.join(root,'.local/logs'),LOG_LEVEL_CONSOLE:'warn',NEXT_TELEMETRY_DISABLED:'1'});
-    console.log('Local MongoDB is ready. Demo credentials: .local/demo-access.json; development emails: .local/mailbox/');
+      LOG_DIR:path.join(runtime,'logs'),LOG_LEVEL_CONSOLE:'warn',NEXT_TELEMETRY_DISABLED:'1'});
+    console.log(`Local MongoDB is ready${isolated?' (fresh isolated verification instance)':''}. Credentials and development emails: ${runtime}`);
   }
   const launches=[['API','server',['--watch','server.js']],['Storefront','Client/my-app',['node_modules/next/dist/bin/next','dev','--port',String(storePort)]],['Admin','Admin/customforge-admin',['node_modules/next/dist/bin/next','dev','--port',String(adminPort)]]];
   for(const [name,directory,args]of launches){
