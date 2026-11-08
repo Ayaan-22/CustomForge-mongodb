@@ -198,7 +198,7 @@ export function FilterSidebar({
               <Select value={field.value} onValueChange={field.set}>
                 <SelectTrigger
                   id={`${inputId}-${field.id}`}
-                  className="w-full text-xs"
+                  className="w-full"
                 >
                   <SelectValue />
                 </SelectTrigger>

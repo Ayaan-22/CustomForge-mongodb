@@ -1354,7 +1354,7 @@ button:disabled {
   gap: 26px;
 }
 .forge-filters {
-  padding: 22px;
+  padding: 18px 16px;
   border: 1px solid #2b3646;
   border-radius: 8px;
   background: #111824;
@@ -1369,7 +1369,8 @@ button:disabled {
   gap: 15px;
   font-size: 1.125rem;
   font-weight: 600;
-  margin-bottom: 20px;
+  line-height: 1.35;
+  margin-bottom: 14px;
 }
 .forge-filter-heading > span {
   display: flex;
@@ -1378,10 +1379,11 @@ button:disabled {
 }
 .forge-filter-heading svg {
   color: var(--primary);
+  flex-shrink: 0;
 }
 .forge-filter-field {
   border-top: 1px solid #283445;
-  padding-top: 17px;
+  padding-top: 12px;
 }
 .forge-filter-field label {
   font-size: 0.875rem;
